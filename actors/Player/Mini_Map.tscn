@@ -1,0 +1,217 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://assets/White-circle.png" type="Texture" id=1]
+[ext_resource path="res://actors/Player/Mini_Map.gd" type="Script" id=2]
+[ext_resource path="res://Planet_Earth.png" type="Texture" id=3]
+
+[node name="Mini_Map" type="Node2D"]
+position = Vector2( 109, 92 )
+script = ExtResource( 2 )
+
+[node name="background" type="Sprite" parent="."]
+texture = ExtResource( 1 )
+
+[node name="earth" type="Sprite" parent="."]
+scale = Vector2( 0.02, 0.02 )
+texture = ExtResource( 3 )
+
+[node name="player" type="Sprite" parent="."]
+scale = Vector2( 0.1, 0.1 )
+
+[node name="asteroid" type="Sprite" parent="."]
+
+[node name="asteroid2" type="Sprite" parent="."]
+
+[node name="asteroid3" type="Sprite" parent="."]
+
+[node name="asteroid4" type="Sprite" parent="."]
+
+[node name="asteroid5" type="Sprite" parent="."]
+
+[node name="asteroid6" type="Sprite" parent="."]
+
+[node name="asteroid7" type="Sprite" parent="."]
+
+[node name="asteroid8" type="Sprite" parent="."]
+
+[node name="asteroid9" type="Sprite" parent="."]
+
+[node name="asteroid10" type="Sprite" parent="."]
+
+[node name="asteroid11" type="Sprite" parent="."]
+
+[node name="asteroid12" type="Sprite" parent="."]
+
+[node name="asteroid13" type="Sprite" parent="."]
+
+[node name="asteroid14" type="Sprite" parent="."]
+
+[node name="asteroid15" type="Sprite" parent="."]
+
+[node name="asteroid16" type="Sprite" parent="."]
+
+[node name="asteroid17" type="Sprite" parent="."]
+
+[node name="asteroid18" type="Sprite" parent="."]
+
+[node name="asteroid19" type="Sprite" parent="."]
+
+[node name="asteroid20" type="Sprite" parent="."]
+
+[node name="asteroid21" type="Sprite" parent="."]
+
+[node name="asteroid22" type="Sprite" parent="."]
+
+[node name="asteroid23" type="Sprite" parent="."]
+
+[node name="asteroid24" type="Sprite" parent="."]
+
+[node name="asteroid25" type="Sprite" parent="."]
+
+[node name="asteroid26" type="Sprite" parent="."]
+
+[node name="asteroid27" type="Sprite" parent="."]
+
+[node name="asteroid28" type="Sprite" parent="."]
+
+[node name="asteroid29" type="Sprite" parent="."]
+
+[node name="asteroid30" type="Sprite" parent="."]
+
+[node name="asteroid31" type="Sprite" parent="."]
+
+[node name="asteroid32" type="Sprite" parent="."]
+
+[node name="asteroid33" type="Sprite" parent="."]
+
+[node name="asteroid34" type="Sprite" parent="."]
+
+[node name="asteroid35" type="Sprite" parent="."]
+
+[node name="asteroid36" type="Sprite" parent="."]
+
+[node name="asteroid37" type="Sprite" parent="."]
+
+[node name="asteroid38" type="Sprite" parent="."]
+
+[node name="asteroid39" type="Sprite" parent="."]
+
+[node name="asteroid40" type="Sprite" parent="."]
+
+[node name="asteroid41" type="Sprite" parent="."]
+
+[node name="asteroid42" type="Sprite" parent="."]
+
+[node name="asteroid43" type="Sprite" parent="."]
+
+[node name="asteroid44" type="Sprite" parent="."]
+
+[node name="asteroid45" type="Sprite" parent="."]
+
+[node name="asteroid46" type="Sprite" parent="."]
+
+[node name="asteroid47" type="Sprite" parent="."]
+
+[node name="asteroid48" type="Sprite" parent="."]
+
+[node name="asteroid49" type="Sprite" parent="."]
+
+[node name="asteroid50" type="Sprite" parent="."]
+
+[node name="asteroid51" type="Sprite" parent="."]
+
+[node name="asteroid52" type="Sprite" parent="."]
+
+[node name="asteroid53" type="Sprite" parent="."]
+
+[node name="asteroid54" type="Sprite" parent="."]
+
+[node name="asteroid55" type="Sprite" parent="."]
+
+[node name="asteroid56" type="Sprite" parent="."]
+
+[node name="asteroid57" type="Sprite" parent="."]
+
+[node name="asteroid58" type="Sprite" parent="."]
+
+[node name="asteroid59" type="Sprite" parent="."]
+
+[node name="asteroid60" type="Sprite" parent="."]
+
+[node name="asteroid61" type="Sprite" parent="."]
+
+[node name="asteroid62" type="Sprite" parent="."]
+
+[node name="asteroid63" type="Sprite" parent="."]
+
+[node name="asteroid64" type="Sprite" parent="."]
+
+[node name="asteroid65" type="Sprite" parent="."]
+
+[node name="asteroid66" type="Sprite" parent="."]
+
+[node name="asteroid67" type="Sprite" parent="."]
+
+[node name="asteroid68" type="Sprite" parent="."]
+
+[node name="asteroid69" type="Sprite" parent="."]
+
+[node name="asteroid70" type="Sprite" parent="."]
+
+[node name="asteroid71" type="Sprite" parent="."]
+
+[node name="asteroid72" type="Sprite" parent="."]
+
+[node name="asteroid73" type="Sprite" parent="."]
+
+[node name="asteroid74" type="Sprite" parent="."]
+
+[node name="asteroid75" type="Sprite" parent="."]
+
+[node name="asteroid76" type="Sprite" parent="."]
+
+[node name="asteroid77" type="Sprite" parent="."]
+
+[node name="asteroid78" type="Sprite" parent="."]
+
+[node name="asteroid79" type="Sprite" parent="."]
+
+[node name="asteroid80" type="Sprite" parent="."]
+
+[node name="asteroid81" type="Sprite" parent="."]
+
+[node name="asteroid82" type="Sprite" parent="."]
+
+[node name="asteroid83" type="Sprite" parent="."]
+
+[node name="asteroid84" type="Sprite" parent="."]
+
+[node name="asteroid85" type="Sprite" parent="."]
+
+[node name="asteroid86" type="Sprite" parent="."]
+
+[node name="asteroid87" type="Sprite" parent="."]
+
+[node name="asteroid88" type="Sprite" parent="."]
+
+[node name="asteroid89" type="Sprite" parent="."]
+
+[node name="asteroid90" type="Sprite" parent="."]
+
+[node name="asteroid91" type="Sprite" parent="."]
+
+[node name="asteroid92" type="Sprite" parent="."]
+
+[node name="asteroid93" type="Sprite" parent="."]
+
+[node name="asteroid94" type="Sprite" parent="."]
+
+[node name="asteroid95" type="Sprite" parent="."]
+
+[node name="asteroid96" type="Sprite" parent="."]
+
+[node name="asteroid97" type="Sprite" parent="."]
+
+[node name="asteroid98" type="Sprite" parent="."]
+
+[node name="asteroid99" type="Sprite" parent="."]

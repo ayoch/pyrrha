@@ -1,0 +1,30 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://actors/Player/Asteroid.gd" type="Script" id=2]
+
+[sub_resource type="StreamTexture" id=1]
+load_path = "res://.import/C1whole.png-e5215f6cfc80410abbafee2a5be712ae.stex"
+
+[node name="Asteroid" type="KinematicBody2D" groups=["asteroid", "minimap", "persists"]]
+z_index = 2
+collision_layer = 0
+collision_mask = 0
+script = ExtResource( 2 )
+
+[node name="Sprite" type="Sprite" parent="."]
+scale = Vector2( 0.25, 0.25 )
+z_index = 1
+texture = SubResource( 1 )
+
+[node name="Physics_Shape" type="CollisionPolygon2D" parent="."]
+position = Vector2( 0, 1 )
+polygon = PoolVector2Array( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 )
+
+[node name="Projectile_Shape" type="CollisionPolygon2D" parent="."]
+polygon = PoolVector2Array( -35, -23, -38, -18, -38, -16, -39, -12, -40, -9, -43, -5, -45, -2, -48, 1, -53, 6, -54, 11, -60, 35, -60, 41, -59, 44, -58, 46, -55, 49, -50, 51, -37, 51, -27, 47, -4, 44, 13, 34, 19, 27, 20, 23, 39, 17, 46, 11, 51, 4, 52, -4, 54, -10, 54, -19, 54, -25, 53, -27, 49, -32, 49, -34, 48, -37, 47, -38, 41, -38, 39, -40, 37, -43, 35, -44, 30, -44, 20, -46, 15, -45, 10, -45, 6, -44, -1, -38, -5, -37, -16, -37, -27, -30 )
+
+[node name="No_Physics_Timer" type="Timer" parent="."]
+autostart = true
+
+[connection signal="tree_entered" from="." to="." method="_on_Asteroid_tree_entered"]
+[connection signal="timeout" from="No_Physics_Timer" to="." method="_on_No_Physics_Timer_timeout"]

@@ -1,0 +1,265 @@
+[gd_scene load_steps=9 format=2]
+
+[ext_resource path="res://CutScene.gd" type="Script" id=1]
+[ext_resource path="res://screenshots/Screen Shot 2022-01-29 at 2.47.34 PM.png" type="Texture" id=3]
+
+[sub_resource type="StyleBoxFlat" id=2]
+bg_color = Color( 0.6, 0.6, 0.6, 0 )
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color( 0, 0, 0, 1 )
+
+[sub_resource type="StyleBoxFlat" id=3]
+bg_color = Color( 0, 0, 0, 1 )
+border_color = Color( 0.0823529, 0.12549, 0.611765, 1 )
+
+[sub_resource type="StreamTexture" id=6]
+
+[sub_resource type="StyleBoxFlat" id=4]
+bg_color = Color( 0, 0, 0, 0 )
+draw_center = false
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color( 0, 0, 0, 1 )
+
+[sub_resource type="StyleBoxFlat" id=5]
+bg_color = Color( 0, 0, 0, 1 )
+
+[sub_resource type="StreamTexture" id=7]
+
+[node name="CutSceneScreen" type="CanvasLayer"]
+script = ExtResource( 1 )
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+rect_min_size = Vector2( 1024, 600 )
+custom_constants/margin_right = 30
+custom_constants/margin_top = 30
+custom_constants/margin_left = 30
+custom_constants/margin_bottom = 30
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="CenterContainer" type="CenterContainer" parent="MarginContainer"]
+margin_left = 30.0
+margin_top = 30.0
+margin_right = 994.0
+margin_bottom = 570.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+margin_left = 30.0
+margin_top = 30.0
+margin_right = 994.0
+margin_bottom = 570.0
+
+[node name="TopRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+margin_right = 964.0
+margin_bottom = 350.0
+rect_min_size = Vector2( 0, 350 )
+
+[node name="LeftPortraitContainer" type="PanelContainer" parent="MarginContainer/VBoxContainer/TopRow"]
+margin_right = 453.0
+margin_bottom = 350.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/panel = SubResource( 2 )
+
+[node name="LeftPortraitPanel" type="Panel" parent="MarginContainer/VBoxContainer/TopRow/LeftPortraitContainer"]
+margin_left = 5.0
+margin_top = 5.0
+margin_right = 448.0
+margin_bottom = 345.0
+rect_min_size = Vector2( 250, 250 )
+custom_styles/panel = SubResource( 3 )
+
+[node name="OtherTextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/TopRow/LeftPortraitContainer/LeftPortraitPanel"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = -10.0
+margin_top = -14.0
+margin_right = -5.0
+margin_bottom = -11.0
+grow_horizontal = 2
+grow_vertical = 2
+rect_min_size = Vector2( 100, 100 )
+size_flags_horizontal = 3
+size_flags_vertical = 3
+texture = SubResource( 6 )
+expand = true
+stretch_mode = 6
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="OtherSprite" type="Sprite" parent="MarginContainer/VBoxContainer/TopRow/LeftPortraitContainer/LeftPortraitPanel"]
+position = Vector2( 226, 155 )
+scale = Vector2( 4.5, 4.5 )
+texture = SubResource( 6 )
+
+[node name="CenterSpacer" type="CenterContainer" parent="MarginContainer/VBoxContainer/TopRow"]
+margin_left = 457.0
+margin_right = 507.0
+margin_bottom = 350.0
+rect_min_size = Vector2( 50, 300 )
+
+[node name="RightPortraitContainer" type="PanelContainer" parent="MarginContainer/VBoxContainer/TopRow"]
+margin_left = 511.0
+margin_right = 964.0
+margin_bottom = 350.0
+rect_clip_content = true
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/panel = SubResource( 4 )
+
+[node name="LeftPortraitPanel" type="Panel" parent="MarginContainer/VBoxContainer/TopRow/RightPortraitContainer"]
+margin_left = 5.0
+margin_top = 5.0
+margin_right = 448.0
+margin_bottom = 345.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/panel = SubResource( 5 )
+
+[node name="TagTextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/TopRow/RightPortraitContainer/LeftPortraitPanel"]
+visible = false
+margin_left = 40.0
+margin_top = 33.0
+margin_right = 846.0
+margin_bottom = 392.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource( 7 )
+expand = true
+stretch_mode = 6
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TagSprite" type="Sprite" parent="MarginContainer/VBoxContainer/TopRow/RightPortraitContainer/LeftPortraitPanel"]
+position = Vector2( 226, 195 )
+scale = Vector2( 2.5, 2.5 )
+texture = SubResource( 7 )
+
+[node name="NameBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+margin_top = 354.0
+margin_right = 964.0
+margin_bottom = 384.0
+rect_min_size = Vector2( 0, 30 )
+
+[node name="CenterContainer2" type="CenterContainer" parent="MarginContainer/VBoxContainer/NameBar"]
+margin_right = 453.0
+margin_bottom = 30.0
+size_flags_horizontal = 3
+
+[node name="OtherNameText" type="TextEdit" parent="MarginContainer/VBoxContainer/NameBar/CenterContainer2"]
+visible = false
+margin_left = 176.0
+margin_top = 5.0
+margin_right = 276.0
+margin_bottom = 25.0
+rect_min_size = Vector2( 100, 20 )
+text = "Other Cat"
+
+[node name="RamesesNameLabel" type="Label" parent="MarginContainer/VBoxContainer/NameBar/CenterContainer2"]
+margin_left = 197.0
+margin_top = 8.0
+margin_right = 255.0
+margin_bottom = 22.0
+text = "Rameses"
+
+[node name="NameBarSpacer" type="CenterContainer" parent="MarginContainer/VBoxContainer/NameBar"]
+margin_left = 457.0
+margin_right = 507.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 50, 0 )
+
+[node name="SkipButton" type="Button" parent="MarginContainer/VBoxContainer/NameBar/NameBarSpacer"]
+margin_left = 6.0
+margin_top = 5.0
+margin_right = 44.0
+margin_bottom = 25.0
+text = "Skip"
+
+[node name="CenterContainer3" type="CenterContainer" parent="MarginContainer/VBoxContainer/NameBar"]
+margin_left = 511.0
+margin_right = 964.0
+margin_bottom = 30.0
+size_flags_horizontal = 3
+
+[node name="TagNameText" type="TextEdit" parent="MarginContainer/VBoxContainer/NameBar/CenterContainer3"]
+visible = false
+margin_left = 201.0
+margin_top = 5.0
+margin_right = 251.0
+margin_bottom = 25.0
+rect_min_size = Vector2( 50, 20 )
+text = "Tag"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer/NameBar/CenterContainer3"]
+visible = false
+margin_left = 226.0
+margin_top = 15.0
+margin_right = 226.0
+margin_bottom = 15.0
+visible_characters = 3
+text = "Tag
+"
+scroll_active = false
+
+[node name="TagNameLabel" type="Label" parent="MarginContainer/VBoxContainer/NameBar/CenterContainer3"]
+margin_left = 216.0
+margin_top = 8.0
+margin_right = 237.0
+margin_bottom = 22.0
+text = "Tag"
+
+[node name="BottomSpacer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+visible = false
+margin_top = 388.0
+margin_right = 964.0
+margin_bottom = 408.0
+rect_min_size = Vector2( 0, 20 )
+
+[node name="DialogContainer" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
+margin_top = 388.0
+margin_right = 964.0
+margin_bottom = 540.0
+size_flags_vertical = 3
+
+[node name="DialogScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/DialogContainer"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 957.0
+margin_bottom = 145.0
+size_flags_vertical = 3
+scroll_horizontal_enabled = false
+
+[node name="DialogBox" type="RichTextLabel" parent="MarginContainer/VBoxContainer/DialogContainer/DialogScrollContainer"]
+margin_right = 950.0
+margin_bottom = 138.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis commodo nulla vitae magna ornare euismod. Mauris faucibus nisi in auctor aliquet. Curabitur pretium, eros ac placerat posuere, ipsum massa fermentum nibh, in facilisis lacus justo ut quam. Etiam ac ornare ipsum, eget tempor risus. Praesent sit amet ipsum ante. Cras sit amet felis quis risus commodo placerat. Maecenas vitae nulla ac nunc ornare interdum vel pulvinar enim. Aliquam blandit vestibulum arcu non iaculis. Nunc urna arcu, tempus in dignissim ut, suscipit vitae sapien. Morbi ac tincidunt est. Suspendisse potenti.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis commodo nulla vitae magna ornare euismod. Mauris faucibus nisi in auctor aliquet. Curabitur pretium, eros ac placerat posuere, ipsum massa fermentum nibh, in facilisis lacus justo ut quam. Etiam ac ornare ipsum, eget tempor risus. Praesent sit amet ipsum ante. Cras sit amet felis quis risus commodo placerat. Maecenas vitae nulla ac nunc ornare interdum vel pulvinar enim. Aliquam blandit vestibulum arcu non iaculis. Nunc urna arcu, tempus in dignissim ut, suscipit vitae sapien. Morbi ac tincidunt est. Suspendisse potenti.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis commodo nulla vitae magna ornare euismod. Mauris faucibus nisi in auctor aliquet. Curabitur pretium, eros ac placerat posuere, ipsum massa fermentum nibh, in facilisis lacus justo ut quam. Etiam ac ornare ipsum, eget tempor risus. Praesent sit amet ipsum ante. Cras sit amet felis quis risus commodo placerat. Maecenas vitae nulla ac nunc ornare interdum vel pulvinar enim. Aliquam blandit vestibulum arcu non iaculis. Nunc urna arcu, tempus in dignissim ut, suscipit vitae sapien. Morbi ac tincidunt est. Suspendisse potenti."
+scroll_following = true
+
+[node name="Sprite" type="Sprite" parent="."]
+position = Vector2( -409, 170 )
+scale = Vector2( 1.68, 1.88 )
+z_index = -1
+texture = ExtResource( 3 )
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/NameBar/NameBarSpacer/SkipButton" to="." method="_on_SkipButton_pressed"]

@@ -1,0 +1,286 @@
+[gd_scene load_steps=13 format=2]
+
+[ext_resource path="res://UI/TextEdit.gd" type="Script" id=1]
+[ext_resource path="res://UI/GUI.gd" type="Script" id=2]
+[ext_resource path="res://UI/PauseIndicator.gd" type="Script" id=3]
+[ext_resource path="res://UI/Speed_Indicator.gd" type="Script" id=4]
+[ext_resource path="res://actors/Player/Mini_Map.tscn" type="PackedScene" id=5]
+[ext_resource path="res://UI/Debug_Display3.gd" type="Script" id=6]
+
+[sub_resource type="StyleBoxFlat" id=4]
+bg_color = Color( 0.6, 0.6, 0.6, 0 )
+
+[sub_resource type="StyleBoxFlat" id=6]
+
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0.360784, 0.109804, 0.109804, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0, 0, 0, 1 )
+
+[sub_resource type="StyleBoxFlat" id=2]
+bg_color = Color( 0.211765, 0.211765, 0.211765, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0, 0, 0, 1 )
+
+[sub_resource type="StyleBoxFlat" id=5]
+bg_color = Color( 0.0352941, 0.466667, 0.929412, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0, 0, 0, 1 )
+
+[sub_resource type="StyleBoxFlat" id=3]
+bg_color = Color( 0.701961, 0.541176, 0.196078, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0, 0, 0, 1 )
+
+[node name="GUI" type="CanvasLayer"]
+script = ExtResource( 2 )
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+custom_constants/margin_right = 50
+custom_constants/margin_top = 50
+custom_constants/margin_left = 50
+custom_constants/margin_bottom = 50
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Rows" type="VBoxContainer" parent="MarginContainer"]
+margin_left = 50.0
+margin_top = 50.0
+margin_right = 974.0
+margin_bottom = 550.0
+mouse_filter = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TopRow" type="HBoxContainer" parent="MarginContainer/Rows"]
+margin_right = 924.0
+margin_bottom = 78.0
+mouse_filter = 2
+size_flags_vertical = 3
+
+[node name="RichTextLabel" type="RichTextLabel" parent="MarginContainer/Rows/TopRow"]
+margin_bottom = 78.0
+text = "test
+"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/Rows/TopRow"]
+margin_left = 4.0
+margin_right = 210.0
+margin_bottom = 78.0
+size_flags_horizontal = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/Rows/TopRow/HBoxContainer"]
+margin_right = 206.0
+margin_bottom = 78.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Debug_Display" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
+margin_right = 206.0
+margin_bottom = 23.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+text = "Debug window.
+
+"
+script = ExtResource( 1 )
+__meta__ = {
+"_editor_description_": ""
+}
+
+[node name="Debug_Display2" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
+margin_top = 27.0
+margin_right = 206.0
+margin_bottom = 50.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+text = "Debug window.
+
+"
+script = ExtResource( 1 )
+__meta__ = {
+"_editor_description_": ""
+}
+
+[node name="Debug_Display3" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
+margin_top = 54.0
+margin_right = 206.0
+margin_bottom = 78.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+text = "Debug window.
+
+"
+script = ExtResource( 6 )
+__meta__ = {
+"_editor_description_": ""
+}
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/Rows/TopRow"]
+margin_left = 214.0
+margin_right = 714.0
+margin_bottom = 78.0
+rect_min_size = Vector2( 500, 0 )
+size_flags_horizontal = 3
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/Rows/TopRow"]
+margin_left = 718.0
+margin_right = 924.0
+margin_bottom = 78.0
+size_flags_horizontal = 3
+
+[node name="PauseIndicator" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer2"]
+visible = false
+margin_right = 206.0
+margin_bottom = 82.0
+size_flags_horizontal = 3
+custom_colors/member_variable_color = Color( 0, 0, 0, 1 )
+custom_colors/background_color = Color( 0.784314, 0.121569, 0.121569, 0 )
+custom_colors/completion_background_color = Color( 0, 0, 0, 1 )
+custom_styles/normal = SubResource( 4 )
+text = "Paused
+"
+script = ExtResource( 3 )
+__meta__ = {
+"_editor_description_": ""
+}
+
+[node name="Mini_Map" parent="MarginContainer/Rows/TopRow/HBoxContainer2" instance=ExtResource( 5 )]
+
+[node name="MiddleRow" type="HBoxContainer" parent="MarginContainer/Rows"]
+margin_top = 82.0
+margin_right = 924.0
+margin_bottom = 398.0
+mouse_filter = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 4.0
+
+[node name="BottomRow" type="HBoxContainer" parent="MarginContainer/Rows"]
+margin_top = 402.0
+margin_right = 924.0
+margin_bottom = 500.0
+mouse_filter = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.0
+
+[node name="CenterContainer" type="CenterContainer" parent="MarginContainer/Rows/BottomRow"]
+margin_right = 646.0
+margin_bottom = 98.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 9.32
+
+[node name="RichTextLabel" type="RichTextLabel" parent="MarginContainer/Rows/BottomRow/CenterContainer"]
+margin_left = 323.0
+margin_top = 49.0
+margin_right = 323.0
+margin_bottom = 49.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 8.39
+custom_styles/normal = SubResource( 6 )
+text = "BLAH BLAH BLAH. BLAH BLAH. I LIKE TURTLES AND MUSHROOMS AND OLIVES AND CHIVES."
+scroll_following = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MiddleSpacer" type="CenterContainer" parent="MarginContainer/Rows/BottomRow"]
+margin_left = 650.0
+margin_right = 719.0
+margin_bottom = 98.0
+mouse_filter = 2
+size_flags_horizontal = 3
+
+[node name="Speed_Indicator" type="RichTextLabel" parent="MarginContainer/Rows/BottomRow"]
+visible = false
+margin_left = 566.0
+margin_right = 924.0
+margin_bottom = 98.0
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.08
+text = "Speed"
+script = ExtResource( 4 )
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/Rows/BottomRow"]
+margin_left = 723.0
+margin_right = 923.0
+margin_bottom = 98.0
+
+[node name="HealthSection" type="CenterContainer" parent="MarginContainer/Rows/BottomRow/VBoxContainer"]
+margin_right = 200.0
+margin_bottom = 30.0
+mouse_filter = 2
+
+[node name="HealthBar" type="ProgressBar" parent="MarginContainer/Rows/BottomRow/VBoxContainer/HealthSection"]
+margin_right = 200.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 200, 30 )
+mouse_filter = 2
+custom_styles/fg = SubResource( 1 )
+custom_styles/bg = SubResource( 2 )
+value = 80.0
+
+[node name="HealthTween" type="Tween" parent="MarginContainer/Rows/BottomRow/VBoxContainer/HealthSection"]
+
+[node name="ShieldSection" type="CenterContainer" parent="MarginContainer/Rows/BottomRow/VBoxContainer"]
+margin_top = 34.0
+margin_right = 200.0
+margin_bottom = 64.0
+mouse_filter = 2
+
+[node name="ShieldBar" type="ProgressBar" parent="MarginContainer/Rows/BottomRow/VBoxContainer/ShieldSection"]
+margin_right = 200.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 200, 30 )
+mouse_filter = 2
+custom_styles/fg = SubResource( 5 )
+custom_styles/bg = SubResource( 2 )
+value = 80.0
+
+[node name="ShieldTween" type="Tween" parent="MarginContainer/Rows/BottomRow/VBoxContainer/ShieldSection"]
+
+[node name="EnergySection" type="CenterContainer" parent="MarginContainer/Rows/BottomRow/VBoxContainer"]
+margin_top = 68.0
+margin_right = 200.0
+margin_bottom = 98.0
+mouse_filter = 2
+
+[node name="EnergyBar" type="ProgressBar" parent="MarginContainer/Rows/BottomRow/VBoxContainer/EnergySection"]
+margin_right = 200.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 200, 30 )
+mouse_filter = 2
+size_flags_vertical = 1
+custom_styles/fg = SubResource( 3 )
+custom_styles/bg = SubResource( 2 )
+value = 80.0
+
+[node name="EnergyTween" type="Tween" parent="MarginContainer/Rows/BottomRow/VBoxContainer/EnergySection"]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+margin_left = 50.0
+margin_top = 50.0
+margin_right = 974.0
+margin_bottom = 550.0
+rect_min_size = Vector2( 10, 0 )

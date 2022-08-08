@@ -94,35 +94,59 @@ size_flags_vertical = 3
 
 [node name="Debug_Display" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
 margin_right = 206.0
-margin_bottom = 23.0
+margin_bottom = 16.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 text = "Debug window.
 
 "
+readonly = true
+virtual_keyboard_enabled = false
+selecting_enabled = false
 script = ExtResource( 1 )
 __meta__ = {
 "_editor_description_": ""
 }
 
 [node name="Debug_Display2" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
-margin_top = 27.0
+margin_top = 20.0
 margin_right = 206.0
-margin_bottom = 50.0
+margin_bottom = 37.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 text = "Debug window.
 
 "
+readonly = true
+virtual_keyboard_enabled = false
+selecting_enabled = false
 script = ExtResource( 1 )
 __meta__ = {
 "_editor_description_": ""
 }
 
 [node name="Debug_Display3" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
-margin_top = 54.0
+margin_top = 41.0
+margin_right = 206.0
+margin_bottom = 57.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+text = "Debug window.
+
+"
+readonly = true
+virtual_keyboard_enabled = false
+selecting_enabled = false
+script = ExtResource( 6 )
+__meta__ = {
+"_editor_description_": ""
+}
+
+[node name="Debug_Display4" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
+margin_top = 61.0
 margin_right = 206.0
 margin_bottom = 78.0
 size_flags_horizontal = 3
@@ -131,7 +155,9 @@ size_flags_stretch_ratio = 2.0
 text = "Debug window.
 
 "
-script = ExtResource( 6 )
+readonly = true
+virtual_keyboard_enabled = false
+selecting_enabled = false
 __meta__ = {
 "_editor_description_": ""
 }

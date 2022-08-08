@@ -10,6 +10,8 @@ onready var energy_tween = $MarginContainer/Rows/BottomRow/VBoxContainer/EnergyS
 
 onready var debug_display = $MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer/Debug_Display
 onready var debug_display2 = $MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer/Debug_Display2
+onready var debug_display3 = $MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer/Debug_Display3
+onready var debug_display4 = $MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer/Debug_Display4
 
 var player: Player
 
@@ -18,6 +20,8 @@ func _ready():
 	GlobalSignals.connect("set_debug_display", self, "set_debug_display")
 	GlobalSignals.connect("add_to_debug2_display", self, "add_to_debug2_display")
 	GlobalSignals.connect("set_debug2_display", self, "set_debug2_display")
+	
+	GlobalSignals.connect("broadcast_player_position", self, "on_receive_player_position")
 
 
 func set_player(player: Player):
@@ -87,4 +91,18 @@ func add_to_debug2_display(message):
 	
 func set_debug2_display(message):
 	debug_display2.text = message
+
+
+func on_receive_player_position(pos):
+	var x = stepify(pos.x, 0.01)
+	var y = stepify(pos.y, 0.01)
+#	print("             ", pos)
+	var text = "pos: %s, %s" % [x, y]
+	debug_display4.set_text(text)
+#	debug_display4.text = "pos: " + pos
+	
+#	var x = stepify(position.x, 0.01)
+#	var y = stepify(position.y, 0.01)
+#	var text = "player position: %s, %s" % [x, y]
+#	self.set_text(text)
 

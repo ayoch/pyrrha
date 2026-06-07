@@ -1,28 +1,28 @@
-extends KinematicBody2D
+extends CharacterBody2D
 class_name Asteroid
 
 #Physics frequency timer.
 var frequency_counter: int = 0
-onready var updates_per_second: int = 1
+@onready var updates_per_second: int = 1
 
 #Basic attributes.
 var rotation_rate: float = 0.0
 var integrity: int = 100
-var velocity = Vector2.ZERO
-export var is_boss = false
+var asteroid_velocity = Vector2.ZERO
+@export var is_boss = false
 
 #Self references.
-onready var sprite = $Sprite
-onready var physics_shape = $Physics_Shape
-onready var projectile_shape = $Projectile_Shape
-onready var no_physics_timer = $No_Physics_Timer
+@onready var sprite = $Sprite2D
+@onready var physics_shape = $Physics_Shape
+@onready var projectile_shape = $Projectile_Shape
+@onready var no_physics_timer = $No_Physics_Timer
 
 #Attributes for breaks.
 var type = "asteroid"
 var species = "C11"
 var size: int = 4
 var can_break = true
-export var is_active: bool = true
+@export var is_active: bool = true
 var is_fragment = false
 
 var stored_texture_path = ""
@@ -33,7 +33,7 @@ var rng = RandomNumberGenerator.new()
 func _ready():
 	physics_shape.polygon = projectile_shape.polygon
 	physics_shape.disabled = true
-	GlobalSignals.connect("player_hit_asteroid", self, "on_player_hit_asteroid")
+	GlobalSignals.connect("player_hit_asteroid", Callable(self, "on_player_hit_asteroid"))
 	rng.randomize()
 	self.integrity = rng.randi_range(100, 300)
 	set_no_physics_timer()
@@ -82,7 +82,8 @@ func _physics_process(delta):
 		GlobalSignals.emit_signal("asteroid_died", self)
 #		self.queue_free()
 	if self.is_inside_tree() == true:
-		move_and_slide(velocity)
+		set_velocity(asteroid_velocity)
+		move_and_slide()
 		rotation += rotation_rate
 
 func _on_Area2D_area_entered():
@@ -116,7 +117,7 @@ func activate():
 	self.visible = true
 	physics_shape.disabled = false
 	projectile_shape.disabled = false
-	self.pause_mode = false
+	self.process_mode = Node.PROCESS_MODE_INHERIT
 
 
 
@@ -124,7 +125,7 @@ func activate():
 func update_physics_shape():
 	var image = Image.new()
 #	print(path)
-	var texture = $Sprite.texture.get_data()
+	var texture = $Sprite2D.texture.get_data()
 	image = texture
 
 	var bitmap = BitMap.new()
@@ -154,8 +155,8 @@ func update_physics_shape():
 #			print("Before change the point is: ", point)
 #			stored_magnitude = point.length()
 #			point = point.normalized()
-			point.x = point.x * $Sprite.scale.x
-			point.y = point.y * $Sprite.scale.y
+			point.x = point.x * $Sprite2D.scale.x
+			point.y = point.y * $Sprite2D.scale.y
 #			point = (point * $Physics_Shape.scale.x)
 #			print("After change the point is: ", point)
 #			print($Physics_Shape.polygon)

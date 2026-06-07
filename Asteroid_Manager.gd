@@ -13,7 +13,7 @@ var break_queue = []
 
 #Physics frequency timer.
 var frequency_counter: int = 0
-onready var updates_per_second: int = 1
+@onready var updates_per_second: int = 1
 
 #Asteroid texture variables.
 var C1 = preload("res://asteroids/Chondrite/C1/C1whole.png")
@@ -23,10 +23,10 @@ var num_fragments: int = 0
 
 #Asteroid spawning.
 var asteroid_spawn_location = Vector2.ZERO
-export var maximum_number_asteroids = 50
+@export var maximum_number_asteroids = 50
 var num_asteroids_in_wave: int = 0
 var time_till_spawn: int = 0
-onready var spawn_timer = $Asteroid_Spawn_Timer
+@onready var spawn_timer = $Asteroid_Spawn_Timer
 var break_spawn_offset = 50
 var breaks_are_prepared: bool = true
 
@@ -34,7 +34,7 @@ var breaks_are_prepared: bool = true
 var current_number_asteroids: int = 0
 
 #Maximum asteroid distance.
-export var maximum_asteroid_distance = 50000
+@export var maximum_asteroid_distance = 50000
 
 #Threading.
 var counter = 0
@@ -49,11 +49,11 @@ const ASTEROID = preload("res://actors/Player/Asteroid.tscn")
 
 #Stages.
 var stage: int = 1
-onready var stage_timer = $Stage_Timer
+@onready var stage_timer = $Stage_Timer
 
 #Special asteroids.
-const PACK_SIX = preload("res://Pack_Six.tscn")
-const PACK_TWELVE = preload("res://Pack_Twelve.tscn")
+#const PACK_SIX = preload("res://Pack_Six.tscn")
+#const PACK_TWELVE = preload("res://Pack_Twelve.tscn")
 var special_queue = []
 
 #Other.
@@ -61,7 +61,7 @@ var rng = RandomNumberGenerator.new()
 
 
 func _ready():
-	GlobalSignals.connect("asteroid_died", self, "on_asteroid_died")
+	GlobalSignals.connect("asteroid_died", Callable(self, "on_asteroid_died"))
 	
 	rng.randomize()
 	set_spawn_timer()
@@ -71,7 +71,7 @@ func _ready():
 	break_thread_semaphore = Semaphore.new()
 	exit_thread = false
 	break_thread = Thread.new()
-	break_thread.start(self, "run_in_break_thread")
+	break_thread.start(Callable(self, "run_in_break_thread"))
 	
 	prepare_breaks()
 
@@ -168,10 +168,10 @@ func spawn_asteroids():
 		asteroid_spawn_location = asteroid_spawn_location.normalized()
 		asteroid_spawn_location = asteroid_spawn_location * rng.randi_range(15000, 20000)
 		new_asteroid.position = asteroid_spawn_location
-		new_asteroid.velocity.x = rng.randf_range(-1,1)
-		new_asteroid.velocity.y = rng.randf_range(-1,1)
-		new_asteroid.velocity = new_asteroid.velocity.normalized()
-		new_asteroid.velocity = new_asteroid.velocity * rng.randf_range(1, 1000)
+		new_asteroid.asteroid_velocity.x = rng.randf_range(-1,1)
+		new_asteroid.asteroid_velocity.y = rng.randf_range(-1,1)
+		new_asteroid.asteroid_velocity = new_asteroid.asteroid_velocity.normalized()
+		new_asteroid.asteroid_velocity = new_asteroid.asteroid_velocity * rng.randf_range(1, 1000)
 		new_asteroid.rotation_rate = rng.randf_range(-.2, .2)
 #		if should_add == true:
 #			add_child(new_asteroid)
@@ -226,24 +226,24 @@ func break_asteroid(asteroid):
 			child.integrity = 50
 			child.position.x = asteroid.position.x + rng.randf_range(-break_spawn_offset, break_spawn_offset)
 			child.position.y = asteroid.position.y + rng.randf_range(-break_spawn_offset, break_spawn_offset)
-			child.velocity.x = asteroid.velocity.x + rng.randf_range(-100, 100)
-			child.velocity.y = asteroid.velocity.y + rng.randf_range(-100, 100)
+			child.asteroid_velocity.x = asteroid.asteroid_velocity.x + rng.randf_range(-100, 100)
+			child.asteroid_velocity.y = asteroid.asteroid_velocity.y + rng.randf_range(-100, 100)
 			child.rotation_rate = asteroid.rotation_rate + rng.randf_range(-.05, .05)
 				
 		elif child.size == 2:
 			child.integrity = 40
 			child.position.x = asteroid.position.x + rng.randf_range(-break_spawn_offset, break_spawn_offset)
 			child.position.y = asteroid.position.y + rng.randf_range(-break_spawn_offset, break_spawn_offset)
-			child.velocity.x = asteroid.velocity.x + rng.randf_range(-200, 200)
-			child.velocity.y = asteroid.velocity.y + rng.randf_range(-200, 200)
+			child.asteroid_velocity.x = asteroid.asteroid_velocity.x + rng.randf_range(-200, 200)
+			child.asteroid_velocity.y = asteroid.asteroid_velocity.y + rng.randf_range(-200, 200)
 			child.rotation_rate = asteroid.rotation_rate + rng.randf_range(-.1, .1)
 			
 		elif child.size == 1:
 			child.integrity = 20
 			child.position.x = asteroid.position.x + rng.randf_range(-break_spawn_offset, break_spawn_offset)
 			child.position.y = asteroid.position.y + rng.randf_range(-break_spawn_offset, break_spawn_offset)
-			child.velocity.x = asteroid.velocity.x + rng.randf_range(-300, 300)
-			child.velocity.y = asteroid.velocity.y + rng.randf_range(-300, 300)
+			child.asteroid_velocity.x = asteroid.asteroid_velocity.x + rng.randf_range(-300, 300)
+			child.asteroid_velocity.y = asteroid.asteroid_velocity.y + rng.randf_range(-300, 300)
 			child.rotation_rate = asteroid.rotation_rate + rng.randf_range(-.2, .2)
 #		print("in break_asteroid, this rock has a rotation_rate of: ", child.rotation_rate)
 #		print("in break_asteroid, this rock has a size of: ", child.size)
@@ -291,24 +291,24 @@ func break_asteroid(asteroid):
 #				fragment.integrity = 50
 #				fragment.position.x = asteroid.position.x + rng.randf_range(-2, 2)
 #				fragment.position.y = asteroid.position.y + rng.randf_range(-2, 2)
-#				fragment.velocity.x = asteroid.velocity.x + rng.randf_range(-100, 100)
-#				fragment.velocity.y = asteroid.velocity.y + rng.randf_range(-100, 100)
+#				fragment.asteroid_velocity.x = asteroid.asteroid_velocity.x + rng.randf_range(-100, 100)
+#				fragment.asteroid_velocity.y = asteroid.asteroid_velocity.y + rng.randf_range(-100, 100)
 #				fragment.rotation_rate = asteroid.rotation_rate + rng.randf_range(-.05, .05)
 #
 #			elif "medium" in str(file):
 #				fragment.integrity = 40
 #				fragment.position.x = asteroid.position.x + rng.randf_range(-2, 2)
 #				fragment.position.y = asteroid.position.y + rng.randf_range(-2, 2)
-#				fragment.velocity.x = asteroid.velocity.x + rng.randf_range(-200, 200)
-#				fragment.velocity.y = asteroid.velocity.y + rng.randf_range(-200, 200)
+#				fragment.asteroid_velocity.x = asteroid.asteroid_velocity.x + rng.randf_range(-200, 200)
+#				fragment.asteroid_velocity.y = asteroid.asteroid_velocity.y + rng.randf_range(-200, 200)
 #				fragment.rotation_rate = asteroid.rotation_rate + rng.randf_range(-.1, .1)
 #
 #			elif "small" in str(file):
 #				fragment.integrity = 20
 #				fragment.position.x = asteroid.position.x + rng.randf_range(-2, 2)
 #				fragment.position.y = asteroid.position.y + rng.randf_range(-2, 2)
-#				fragment.velocity.x = asteroid.velocity.x + rng.randf_range(-300, 300)
-#				fragment.velocity.y = asteroid.velocity.y + rng.randf_range(-300, 300)
+#				fragment.asteroid_velocity.x = asteroid.asteroid_velocity.x + rng.randf_range(-300, 300)
+#				fragment.asteroid_velocity.y = asteroid.asteroid_velocity.y + rng.randf_range(-300, 300)
 #				fragment.rotation_rate = asteroid.rotation_rate + rng.randf_range(-.2, .2)
 #	#		fragment.get_child(1).disabled = true
 ##			if should_add == true:
@@ -328,11 +328,11 @@ func break_asteroid(asteroid):
 func get_usable_asteroid():
 	if removed_asteroids.size() > 0:
 		var asteroid_to_return = removed_asteroids[0]
-		removed_asteroids.remove(0)
+		removed_asteroids.remove_at(0)
 		species_update(asteroid_to_return)
 		return asteroid_to_return
 	else:
-		var ast = ASTEROID.instance()
+		var ast = ASTEROID.instantiate()
 #		ast.update_physics_shape()
 
 #		Set layers by taking to the power of the desired layer minus one. Add
@@ -384,7 +384,7 @@ func get_usable_break(species):
 			
 
 	print("Didn't find a break. Making a new one.")
-	var new_break = BREAK.instance()
+	var new_break = BREAK.instantiate()
 	new_break.species = species
 	fill_break_node(new_break)
 	
@@ -399,20 +399,17 @@ func get_usable_break(species):
 
 func return_files_in_directory(path):
 	var files = []
-	var dir = Directory.new()
-	
-	dir.open(path)
+	var dir = DirAccess.open(path)
+	if not dir:
+		return files
 	dir.list_dir_begin()
-
 	while true:
 		var file = dir.get_next()
 		if file == "":
 			break
 		elif not file.begins_with("."):
 			files.append(file)
-
 	dir.list_dir_end()
-
 	return files
 
 
@@ -434,7 +431,7 @@ func prepare_breaks():
 #	print("break_array's size is: ", break_array.size())
 	for arr in break_array:
 		while arr.size() < 10:
-			break_node = BREAK.instance()
+			break_node = BREAK.instantiate()
 #			fill_break_node(break_node)
 #			break_node = get_usable_break("C11")
 			
@@ -593,16 +590,16 @@ func species_update(object):
 #will be deposited into the tree slowly rather than dumped at once.
 func add_rocks_to_tree():
 	if break_queue.size() > 0:
-		if break_queue.get_children > 0:
+		if break_queue.get_children() > 0:
 			self.add_child(break_queue[0].get_child(0))
 			break_queue[0].remove_child(0)
 		else:
 			add_break_to_correct_array(break_queue[0])
-			break_queue.remove[0]
+			break_queue.remove_at(0)
 	
 	elif asteroid_queue.size() > 0:
 		self.add_child(asteroid_queue[0])
-		asteroid_queue.remove(0)
+		asteroid_queue.remove_at(0)
 
 
 #Puts a break in the correct array.
@@ -657,26 +654,26 @@ func manage_stages():
 		pass
 
 
-func spawn_pack_five(position: Vector2):
-	var pack_six = PACK_SIX.instance()
-	self.add_child(pack_six)
-	pack_six.global_position = position
-	for child in pack_six.get_children():
-		var roid = get_usable_asteroid()
-		roid.global_position = child.global_position
-		asteroid_queue.append(roid)
-	pack_six.queue_free()
+#func spawn_pack_five(position: Vector2):
+#	var pack_six = PACK_SIX.instantiate()
+#	self.add_child(pack_six)
+#	pack_six.global_position = position
+#	for child in pack_six.get_children():
+#		var roid = get_usable_asteroid()
+#		roid.global_position = child.global_position
+#		asteroid_queue.append(roid)
+#	pack_six.queue_free()
 
 
-func spawn_pack_twelve(position: Vector2):
-	var pack_twelve = PACK_TWELVE.instance()
-	self.add_child(pack_twelve)
-	pack_twelve.global_position = position
-	for child in pack_twelve.get_children():
-		var roid = get_usable_asteroid()
-		roid.global_position = child.global_position
-		asteroid_queue.append(roid)
-	pack_twelve.queue_free()
+#func spawn_pack_twelve(position: Vector2):
+#	var pack_twelve = PACK_TWELVE.instantiate()
+#	self.add_child(pack_twelve)
+#	pack_twelve.global_position = position
+#	for child in pack_twelve.get_children():
+#		var roid = get_usable_asteroid()
+#		roid.global_position = child.global_position
+#		asteroid_queue.append(roid)
+#	pack_twelve.queue_free()
 
 
 func _on_Stage_Timer_timeout():

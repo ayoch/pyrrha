@@ -12,8 +12,8 @@ func _ready():
 	pass
 
 func on_player_position_changed(position):
-	var x = stepify(position.x, 0.01)
-	var y = stepify(position.y, 0.01)
+	var x = snapped(position.x, 0.01)
+	var y = snapped(position.y, 0.01)
 	var text = "player position: %s, %s" % [x, y]
 	self.set_text(text)
 

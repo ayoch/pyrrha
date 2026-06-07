@@ -1,7 +1,7 @@
 extends Node2D
 class_name Randomness
 
-var _noise = OpenSimplexNoise.new()
+var _noise = FastNoiseLite.new()
 var _random = RandomNumberGenerator.new()
 
 
@@ -18,7 +18,7 @@ func get_random_float(minimum: float, maximum: float) ->float:
 	return _random.randf_range(minimum, maximum)
 
 
-func get_random_noise(seed_value: int, octaves: int, period: float, persistence: float, iterations: int):
+func get_random_noise(seed_value: int, fractal_octaves: int, period: float, persistence: float, iterations: int):
 	for iteration in iterations:
 		return(_noise.get_noise1(iteration))
 

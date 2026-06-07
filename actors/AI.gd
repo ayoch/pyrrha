@@ -12,16 +12,16 @@ enum State {
 }
 
 
-export (bool) var should_draw_path_line := false
+@export var should_draw_path_line := false
 
 
-onready var patrol_timer = $PatrolTimer
-onready var path_line = $PathLine
+@onready var patrol_timer = $PatrolTimer
+@onready var path_line = $PathLine
 
 
-var current_state: int = -1 setget set_state
+var current_state: int = -1: set = set_state
 var actor: Actor = null
-var target: KinematicBody2D = null
+var target: CharacterBody2D = null
 var weapon: Weapon = null
 var team: int = -1
 
@@ -56,7 +56,9 @@ func _physics_process(delta: float) -> void:
 				if path.size() > 1:
 					actor_velocity = actor.velocity_toward(path[1])
 					actor.rotate_toward(path[1])
-					actor.move_and_slide(actor_velocity)
+					actor.set_velocity(actor_velocity)
+					actor.move_and_slide()
+					actor.velocity
 					set_path_line(path)
 				else:
 					patrol_location_reached = true
@@ -75,7 +77,9 @@ func _physics_process(delta: float) -> void:
 			if path.size() > 1:
 				actor_velocity = actor.velocity_toward(path[1])
 				actor.rotate_toward(path[1])
-				actor.move_and_slide(actor_velocity)
+				actor.set_velocity(actor_velocity)
+				actor.move_and_slide()
+				actor.velocity
 				set_path_line(path)
 			else:
 				set_state(State.PATROL)
@@ -84,12 +88,12 @@ func _physics_process(delta: float) -> void:
 			print("Error: found a state for our enemy that should not exist")
 
 
-func initialize(actor: KinematicBody2D, weapon: Weapon, team: int):
+func initialize(actor: CharacterBody2D, weapon: Weapon, team: int):
 	self.actor = actor
 	self.weapon = weapon
 	self.team = team
 
-	weapon.connect("weapon_out_of_ammo", self, "handle_reload")
+	weapon.connect("weapon_out_of_ammo", Callable(self, "handle_reload"))
 
 
 func set_path_line(points: Array):
@@ -129,8 +133,8 @@ func handle_reload():
 
 func _on_PatrolTimer_timeout() -> void:
 	var patrol_range = 150
-	var random_x = rand_range(-patrol_range, patrol_range)
-	var random_y = rand_range(-patrol_range, patrol_range)
+	var random_x = randf_range(-patrol_range, patrol_range)
+	var random_y = randf_range(-patrol_range, patrol_range)
 	patrol_location = Vector2(random_x, random_y) + origin
 	patrol_location_reached = false
 

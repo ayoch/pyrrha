@@ -2,7 +2,7 @@ extends CanvasLayer
 
 
 func _on_New_GameButton_pressed() -> void:
-	get_tree().change_scene("res://CutSceneScreen.tscn")
+	get_tree().change_scene_to_file("res://Main.tscn")
 
 
 func _on_QuitButton_pressed() -> void:

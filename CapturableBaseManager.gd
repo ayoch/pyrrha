@@ -11,7 +11,7 @@ var capturable_bases: Array = []
 func _ready() -> void:
 	capturable_bases = get_children()
 	for base in capturable_bases:
-		base.connect("base_captured", self, "handle_base_captured")
+		base.connect("base_captured", Callable(self, "handle_base_captured"))
 
 
 func get_capturable_bases() -> Array:

@@ -16,4 +16,4 @@ func handle_play_intro():
 
 
 func _on_SkipButton_pressed():
-	get_tree().change_scene("res://Main.tscn")
+	get_tree().change_scene_to_file("res://Main.tscn")

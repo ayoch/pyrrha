@@ -16,7 +16,7 @@ func _ready():
 func assign_species():
 	var type_float = rng.randf_range(0, 1)
 	if type_float >= 0.0 and type_float <= 0.75: #If it's a C.
-		return "C11"
+		species = "C11"
 #		var base_int = rng.randi_range(1, 2) #Choose between the base models available.
 #		var break_int = rng.randi_range(1, 2) #Choose between the breaks available.
 #		if base_int == 1:
@@ -34,19 +34,19 @@ func assign_species():
 func make_children():
 	if species == "C11":
 		for i in 5:
-			self.add_child(ASTEROID.instance())
+			self.add_child(ASTEROID.instantiate())
 	elif species == "C12":
 		for i in 5:
-			self.add_child(ASTEROID.instance())
+			self.add_child(ASTEROID.instantiate())
 	elif species == "S11":
 		for i in 8:
-			self.add_child(ASTEROID.instance())
+			self.add_child(ASTEROID.instantiate())
 	elif species == "S12":
 		for i in 5:
-			self.add_child(ASTEROID.instance())
+			self.add_child(ASTEROID.instantiate())
 	elif species == "M11":
 		for i in 5:
-			self.add_child(ASTEROID.instance())
+			self.add_child(ASTEROID.instantiate())
 	elif species == "M12":
 		for i in 5:
-			self.add_child(ASTEROID.instance())
+			self.add_child(ASTEROID.instantiate())

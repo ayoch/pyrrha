@@ -1,6 +1,6 @@
 extends Camera2D
 
-onready var starfield_particles = $Starfield_Particles
+@onready var starfield_particles = $Starfield_Particles
 # Declare member variables here. Examples:
 # var a = 2
 # var b = "text"

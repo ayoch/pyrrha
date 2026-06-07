@@ -1,9 +1,9 @@
-extends KinematicBody2D
+extends CharacterBody2D
 class_name Player
 
-onready var collision_placeholder = $Collision_Placeholder
+@onready var collision_placeholder = $Collision_Placeholder
 var type = "player"
-onready var heard_something = preload("res://HearSomething.tscn")
+#@onready var heard_something = preload("res://HearSomething.tscn")
 #signal player_health_changed(new_health)
 #signal player_energy_changed(new_energy)
 
@@ -14,24 +14,24 @@ var frequency_counter = 0
 
 #For new movement system.
 var player_rotation
-export (int) var base_acceleration_forward = 10
-export (int) var base_acceleration_back = 2
-export (int) var base_acceleration_left = 3
-export (int) var base_acceleration_right = 3
+@export var base_acceleration_forward: int = 10
+@export var base_acceleration_back: int = 2
+@export var base_acceleration_left: int = 3
+@export var base_acceleration_right: int = 3
 var current_velocity
 var movement_direction := Vector2.ZERO
 var temp_movement_direction = Vector2.ZERO
 
 #New variables.
-onready var left_ray = $Left_Laser_Ray_Cast
-onready var right_ray = $Right_Laser_Ray_Cast
+@onready var left_ray = $Left_Laser_Ray_Cast
+@onready var right_ray = $Right_Laser_Ray_Cast
 
 #Old variables.
-export (int) var speed = 350
-export (int) var base_speed = 350
-export (int) var base_energy_regen_rate = 1
-export (int) var energy_loss_rate = 2
-export (int) var height_layer = 2
+@export var speed: int = 350
+@export var base_speed: int = 350
+@export var base_energy_regen_rate: int = 1
+@export var energy_loss_rate: int = 2
+@export var height_layer: int = 2
 
 #Old variables.
 #var height_layer: int = 2
@@ -43,16 +43,16 @@ var energy:int = 100
 var max_energy:int = 100
 var noise_timer: int = 0
 
-onready var player_hearing 
-onready var player_camera 
+@onready var player_hearing 
+@onready var player_camera 
 #onready var animation_player = $Sprite/AnimationPlayer
 #onready var light = $SightZoneLight
-onready var laser_eyes_left: Line2D = $LaserEyesLeft
-onready var laser_eyes_right: Line2D = $LaserEyesRight
-onready var prograde_indicator = $Prograde_Indicator
-onready var retrograde_indicator = $Retrograde_Indicator
-onready var thrust_indicator = $Thrust_Indicator
-onready var planet_indicator = $Planet_Indicator
+@onready var laser_eyes_left: Line2D = $LaserEyesLeft
+@onready var laser_eyes_right: Line2D = $LaserEyesRight
+@onready var prograde_indicator = $Prograde_Indicator
+@onready var retrograde_indicator = $Retrograde_Indicator
+@onready var thrust_indicator = $Thrust_Indicator
+@onready var planet_indicator = $Planet_Indicator
 var earth_location: Vector2 
 
 var nav_is_pressed = false
@@ -68,19 +68,18 @@ func _ready() -> void:
 	laser_eyes_left.visible = false
 	laser_eyes_right.visible = false
 	
-	GlobalSignals.emit_signal("active_room", "LivingRoom")
 	
-	GlobalSignals.connect("made_noise", self, "handle_noise_heard")
+	GlobalSignals.connect("made_noise", Callable(self, "handle_noise_heard"))
 	GlobalSignals.emit_signal("player_exists")
 
 
 func handle_noise_heard(intensity: int, position: Vector2, type, height: int):
-#	pass
-	if position != self.global_position:
-		var hear_something = heard_something.instance()
-#		hear_something.set_visibility(false)
-		hear_something.global_position = position
-		player_hearing.add_child(hear_something)
+	pass
+	#if position != self.global_position:
+		#var hear_something = heard_something.instantiate()
+##		hear_something.set_visibility(false)
+		#hear_something.global_position = position
+		#player_hearing.add_child(hear_something)
 
 
 func _physics_process(delta: float) -> void:
@@ -214,13 +213,14 @@ func _physics_process(delta: float) -> void:
 #	X := originX + cos(angle)*radius;
 #	Y := originY + sin(angle)*radius;
 
-	move_and_slide(movement_direction)
+	set_velocity(movement_direction)
+	move_and_slide()
 	GlobalSignals.emit_signal("update_speed", movement_direction.length())
 
 
 func set_directional_animations(direction):
 #	print("Player direction index is in radians: ", player_direction_degrees)
-	player_direction_degrees = rad2deg(direction.angle())
+	player_direction_degrees = rad_to_deg(direction.angle())
 	
 	if player_direction_degrees < 0:
 		player_direction_degrees += 360
@@ -369,8 +369,8 @@ func laser_eyes() -> void:
 		laser_eyes_left.add_point(laser_eyes_left.get_local_mouse_position())
 		laser_eyes_right.add_point(laser_eyes_right.get_local_mouse_position())
 		
-		left_ray.cast_to = left_ray.get_local_mouse_position() 
-		right_ray.cast_to = right_ray.get_local_mouse_position() 
+		left_ray.target_position = left_ray.get_local_mouse_position() 
+		right_ray.target_position = right_ray.get_local_mouse_position() 
 		
 		left_ray.position = laser_eyes_left.position
 		right_ray.position = laser_eyes_right.position
@@ -459,7 +459,7 @@ func die():
 
 func save():
 	var save_dict = {
-	"filename" : get_filename(),
+	"filename" : get_scene_file_path(),
 	"parent" : get_parent().get_path(),
 	"pos_x" : position.x, # Vector2 is not supported by JSON
 	"pos_y" : position.y,

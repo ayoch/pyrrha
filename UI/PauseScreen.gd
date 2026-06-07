@@ -12,7 +12,7 @@ func _on_ContinueButton_pressed() -> void:
 
 func _on_MainMenuButton_pressed() -> void:
 	get_tree().paused = false
-	get_tree().change_scene("res://UI/MainMenuScreen.tscn")
+	get_tree().change_scene_to_file("res://UI/MainMenuScreen.tscn")
 
 
 func _on_SaveButton_pressed():

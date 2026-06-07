@@ -1,0 +1,8 @@
+# Godot editor cache
+.godot/
+
+# Export
+export.cfg
+
+# macOS
+.DS_Store

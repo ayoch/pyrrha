@@ -13,7 +13,7 @@ var counter = 0
 
 
 func _ready():
-	GlobalSignals.connect("broadcast_player_position", self, "_on_received_player_position")
+	GlobalSignals.connect("broadcast_player_position", Callable(self, "_on_received_player_position"))
 	rng.randomize()
 	generate_star_fields()
 
@@ -24,7 +24,7 @@ func _physics_process(delta):
 #		print(self.get_child_count(), " starfields currently.")
 	counter += 1
 	if counter == 60:
-		counter == 0
+		counter = 0
 
 
 func generate_star_fields():
@@ -87,7 +87,7 @@ func is_duplicate_starfield(position):
 
 
 func generate_starfield():
-	var new_starfield = Sprite.new()
+	var new_starfield = Sprite2D.new()
 	new_starfield.texture = load("res://2000x2000pxStarfield_2_LessStars.png")
 	randomized_rotation = rng.randi_range(1, 4)
 	if randomized_rotation == 2:

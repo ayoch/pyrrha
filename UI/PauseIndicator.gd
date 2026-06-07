@@ -9,7 +9,7 @@ extends TextEdit
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	self.visible = false
-	GlobalSignals.connect("paused", self, "handle_pause")
+	GlobalSignals.connect("paused", Callable(self, "handle_pause"))
 
 
 func handle_pause(message):

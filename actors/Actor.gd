@@ -1,18 +1,18 @@
-extends KinematicBody2D
+extends CharacterBody2D
 class_name Actor
 
 
 signal died
 
 
-onready var collision_shape = $CollisionShape2D
-onready var health_stat = $Health
-onready var ai = $AI
-onready var weapon: Weapon = $Weapon
-onready var team = $Team
+@onready var collision_shape = $CollisionShape2D
+@onready var health_stat = $Health
+@onready var ai = $AI
+@onready var weapon: Weapon = $Weapon
+@onready var team = $Team
 
 
-export (int) var speed = 150
+@export var speed: int = 150
 
 
 func _ready() -> void:

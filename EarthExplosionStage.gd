@@ -74,7 +74,7 @@ func spawn_explosion(world_pos: Vector2, size_scale: float = 1.0) -> void:
 		return
 	# Map 2D disk position to 3D point on the unit sphere's near hemisphere.
 	var x3: float = offset.x / _earth_radius
-	var y3: float = offset.y / _earth_radius
+	var y3: float = -offset.y / _earth_radius  # 2D Y is down; 3D Y is up
 	var z3: float = sqrt(max(0.0, 1.0 - x3 * x3 - y3 * y3))
 	var radial := Vector3(x3, y3, z3)
 	var ex := ExplosionScene.instantiate()

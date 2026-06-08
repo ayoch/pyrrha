@@ -71,13 +71,21 @@ const SILHOUETTE_EPSILON := 2.0           # polygon simplification (pixels)
 #   layer 1 (=1) : player
 #   layer 2 (=2) : whole asteroids
 #   layer 3 (=4) : fragments
-# Wholes collide with wholes + player. Fragments collide ONLY with player.
-# Mining ray mask uses 6 (wholes + fragments).
+# Both wholes and fragments collide only with the player (mask=1).
+# Whole-on-whole was removed: O(n²) pairs in clumps, no gameplay response.
+# Mining/defense ray masks use 6 (wholes + fragments).
 const LAYER_PLAYER := 1
 const LAYER_WHOLE := 2
 const LAYER_FRAGMENT := 4
-const MASK_WHOLE := LAYER_PLAYER | LAYER_WHOLE      # 3
+# Whole rocks only collide with the player — not with each other.
+# Whole-on-whole collision is O(n²) in clump size and has no gameplay response code.
+const MASK_WHOLE := LAYER_PLAYER                     # 1
 const MASK_FRAGMENT := LAYER_PLAYER                  # 1
+
+# Hard cap on fragments spawned per asteroid break. Each recipe can have many
+# entries × up to 8 fragments each; a dense clump breaking simultaneously
+# would otherwise produce hundreds of nodes at once.
+const MAX_FRAGMENTS_PER_BREAK := 12
 
 # Fragment collision polygon vertex count (cheap convex octagon).
 const FRAGMENT_HULL_SIDES := 8
@@ -482,11 +490,15 @@ func _on_asteroid_died(asteroid) -> void:
 
 func _fragment(parent_rock) -> void:
 	var recipe: Array = _break_recipes.get(parent_rock.species, [])
+	var total_spawned: int = 0
 	for spec in recipe:
+		if total_spawned >= MAX_FRAGMENTS_PER_BREAK:
+			break
 		var size: int = spec.size
 		var poly: PackedVector2Array = _polygon_for_texture.get(spec.texture, PackedVector2Array())
 		var sprite_scale: float = SIZE_SCALES.get(size, 0.25)
 		var count: int = _rng.randi_range(FRAGMENT_MULTIPLIER_MIN, FRAGMENT_MULTIPLIER_MAX)
+		count = min(count, MAX_FRAGMENTS_PER_BREAK - total_spawned)
 		for k in count:
 			var frag := _take_from_pool()
 			var pos: Vector2 = parent_rock.position + Vector2(
@@ -500,6 +512,7 @@ func _fragment(parent_rock) -> void:
 			frag.reset(parent_rock.species, size, true, spec.texture, poly, sprite_scale,
 					   pos, vel, rot_rate, _integrity_for_size(size))
 			_spawn_queue.append(frag)
+			total_spawned += 1
 
 
 # ----------------------------------------------------------------------

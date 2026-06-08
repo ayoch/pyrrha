@@ -79,14 +79,14 @@ func reset(p_species: String, p_size: int, p_is_fragment: bool,
 	has_impact_fate = false
 	died_to_earth = false
 	# Collision layout: fragments only collide with the player; whole rocks
-	# collide with player + other whole rocks. Keeps physics pair count linear
-	# in fragment count instead of quadratic.
+	# Whole rocks and fragments both collide only with the player.
+	# Whole-on-whole collision is O(n²) in clump size with no gameplay response.
 	if p_is_fragment:
 		collision_layer = 4   # LAYER_FRAGMENT
-		collision_mask = 1    # MASK_FRAGMENT (player only)
+		collision_mask = 1    # player only
 	else:
 		collision_layer = 2   # LAYER_WHOLE
-		collision_mask = 3    # MASK_WHOLE (player + other wholes)
+		collision_mask = 1    # player only
 	integrity = p_integrity
 	position = p_position
 	rotation = 0.0

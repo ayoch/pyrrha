@@ -18,7 +18,7 @@ var _active_target: bool = false
 
 func _ready() -> void:
 	_beam = Line2D.new()
-	_beam.width = 3.5
+	_beam.width = 2.0
 	_beam.default_color = beam_color
 	_beam.joint_mode = Line2D.LINE_JOINT_ROUND
 	_beam.begin_cap_mode = Line2D.LINE_CAP_ROUND
@@ -26,6 +26,9 @@ func _ready() -> void:
 	_beam.antialiased = true
 	_beam.z_index = 8
 	_beam.visible = false
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_beam.material = mat
 	add_child(_beam)
 
 	_ray = RayCast2D.new()

@@ -16,6 +16,12 @@ var _on_done: Callable
 var _rot: float = 0.0
 
 
+func _ready() -> void:
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	material = mat
+
+
 func emit(at_pos: Vector2, callback: Callable) -> void:
 	global_position = at_pos
 	_rot = randf() * TAU

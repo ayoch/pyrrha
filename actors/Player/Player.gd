@@ -103,6 +103,17 @@ var _defense_turret: Node = null
 
 
 func _ready() -> void:
+	var add_mat := CanvasItemMaterial.new()
+	add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	mining_beam_left.material = add_mat
+	mining_beam_right.material = add_mat
+	for flame: AnimatedSprite2D in [
+		thruster_flame, fwd_flame_left, fwd_flame_right,
+		retro_flame_left, retro_flame_right,
+		thruster_flame_left, thruster_flame_left2,
+		thruster_flame_right, thruster_flame_right2,
+	]:
+		flame.material = add_mat
 	mining_beam_left.visible = false
 	mining_beam_right.visible = false
 	thruster_flame.visible = false

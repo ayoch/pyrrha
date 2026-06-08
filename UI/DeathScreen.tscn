@@ -31,6 +31,11 @@ layout_mode = 2
 text = "You bought the farm."
 horizontal_alignment = 1
 
+[node name="Stats" type="Label" parent="Center/Panel/Rows"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.75, 0.75, 0.75, 1)
+
 [node name="RetryButton" type="Button" parent="Center/Panel/Rows"]
 layout_mode = 2
 text = "Try again"

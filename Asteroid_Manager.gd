@@ -228,6 +228,7 @@ var _earth_image_scale: float = 1.0   # the Earth sprite's scale at image-captur
 var _density_noise: FastNoiseLite
 var _total_deaths: int = 0
 var _stage_deaths_start: int = 0   # _total_deaths snapshot at start of each stage
+var _asteroids_destroyed: int = 0
 var _shop_opened_this_respite: bool = false
 
 # Dust cloud pool. Dust nodes are kept as children of this manager and reused.
@@ -502,6 +503,7 @@ func _on_asteroid_died(asteroid) -> void:
 	# Earth impacts: rock is consumed by the planet; no dust, no fragments.
 	# The impact explosion is already triggered in _on_earth_impact.
 	if not asteroid.died_to_earth:
+		_asteroids_destroyed += 1
 		var vel: Vector2 = asteroid.asteroid_velocity if "asteroid_velocity" in asteroid else Vector2.ZERO
 		_spawn_dust(asteroid.global_position, asteroid.size, vel)
 		if asteroid.can_break:
@@ -821,6 +823,9 @@ func _advance_phase(delta: float) -> void:
 func _on_player_died() -> void:
 	_phase = Phase.DEAD
 	spawn_timer.stop()
+	GlobalSignals.run_stage_reached = _stage_index + 1
+	GlobalSignals.run_earth_casualties = _total_deaths
+	GlobalSignals.run_asteroids_destroyed = _asteroids_destroyed
 	GlobalSignals.reset_progress()
 
 

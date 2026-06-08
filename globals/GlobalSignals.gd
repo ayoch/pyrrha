@@ -44,6 +44,11 @@ func spend_credits(amount: int) -> void:
 	credits = max(0, credits - amount)
 	emit_signal("credits_changed", credits)
 
+# Run stats — written by AsteroidManager before reset_progress() on death.
+var run_stage_reached: int = 1
+var run_earth_casualties: int = 0
+var run_asteroids_destroyed: int = 0
+
 func reset_progress() -> void:
 	credits = 0
 	upgrade_hull = 0

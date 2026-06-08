@@ -12,6 +12,8 @@ extends Node3D
 # e.g. 0.5 = first half grows, second half holds then fades.
 @export var expand_fraction: float = 0.45
 @export var hold_fraction: float = 0.25   # after expand, before fade
+# Squash along local +Y (outward radial). 1.0 = sphere; <1 = flat on surface.
+@export var squash: float = 1.0
 
 @onready var mesh: MeshInstance3D = $Mesh
 var _age: float = 0.0
@@ -43,7 +45,8 @@ func _process(delta: float) -> void:
 		scale_t = sqrt(t / expand_end)
 	else:
 		scale_t = 1.0
-	mesh.scale = Vector3.ONE * lerp(start_scale, end_scale, scale_t)
+	var s: float = lerp(start_scale, end_scale, scale_t)
+	mesh.scale = Vector3(s, s * squash, s)
 
 	var alpha: float
 	if t <= hold_end:

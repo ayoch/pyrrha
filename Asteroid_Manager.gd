@@ -120,12 +120,12 @@ const DUST_COUNT_BY_SIZE := {4: 80, 3: 40, 2: 20, 1: 8}
 enum Phase { ACTIVE, RESPITE, WON, DEAD }
 
 const STAGES := [
-	{"duration": 45.0, "threats": 1, "boss": "fastball",            "base_credits": 150},
-	{"duration": 60.0, "threats": 2, "boss": "double_fastball",     "base_credits": 200},
-	{"duration": 75.0, "threats": 3, "boss": "clump_6",             "base_credits": 275},
-	{"duration": 90.0, "threats": 4, "boss": "clump_plus_fastball", "base_credits": 350},
-	{"duration": 90.0, "threats": 5, "boss": "layered_clump",       "base_credits": 450},
-	{"duration": 90.0, "threats": 6, "boss": "finale",              "base_credits": 550},
+	{"duration": 45.0, "threats": 1, "boss": "fastball",            "base_credits": 200},
+	{"duration": 60.0, "threats": 2, "boss": "double_fastball",     "base_credits": 275},
+	{"duration": 75.0, "threats": 3, "boss": "clump_6",             "base_credits": 375},
+	{"duration": 90.0, "threats": 4, "boss": "clump_plus_fastball", "base_credits": 475},
+	{"duration": 90.0, "threats": 5, "boss": "layered_clump",       "base_credits": 600},
+	{"duration": 90.0, "threats": 6, "boss": "finale",              "base_credits": 725},
 ]
 
 # Credits awarded = base_credits * pct, where pct is determined by how many

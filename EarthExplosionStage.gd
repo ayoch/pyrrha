@@ -65,6 +65,9 @@ func spawn_explosion(world_pos: Vector2, size_scale: float = 1.0) -> void:
 	# Align the explosion's local +Y axis with the outward radial direction so
 	# its "up" points away from Earth's center.
 	ex.basis = _basis_with_up(radial)
+	# Squash along the outward radial (+Y) so surface explosions hug the sphere.
+	# z3 = how directly the normal faces the camera; pole=1.0, limb≈0.0.
+	ex.squash = lerpf(0.25, 1.0, z3)
 	# Scale end_scale and lifetime by the impactor's relative size.
 	ex.end_scale *= size_scale
 	ex.start_scale *= size_scale

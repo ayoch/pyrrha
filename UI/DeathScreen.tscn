@@ -31,11 +31,6 @@ layout_mode = 2
 text = "You bought the farm."
 horizontal_alignment = 1
 
-[node name="Sub" type="Label" parent="Center/Panel/Rows"]
-layout_mode = 2
-text = "Try again."
-horizontal_alignment = 1
-
 [node name="RetryButton" type="Button" parent="Center/Panel/Rows"]
 layout_mode = 2
 text = "Try again"

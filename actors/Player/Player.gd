@@ -346,7 +346,7 @@ func _handle_energy(delta: float) -> void:
 	if thrusting:
 		rate -= thrust_energy_drain_per_sec
 	if defense_firing:
-		rate -= mining_energy_drain_per_sec * 0.5
+		rate -= thrust_energy_drain_per_sec * 0.75
 	if rate == 0.0 and energy < max_energy:
 		rate = energy_regen_per_sec
 	if rate == 0.0:

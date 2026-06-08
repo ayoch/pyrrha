@@ -620,10 +620,10 @@ func _count_active_asteroids() -> int:
 	return n
 
 
-func _count_whole_asteroids() -> int:
+func _count_whole_earth_threats() -> int:
 	var n := 0
 	for c in get_children():
-		if c.is_in_group("asteroid") and "size" in c and c.size == SIZE_WHOLE:
+		if c.is_in_group("asteroid") and "has_impact_fate" in c and c.has_impact_fate and c.size == SIZE_WHOLE:
 			n += 1
 	return n
 
@@ -837,7 +837,7 @@ func _tick_boss(_delta: float) -> void:
 	# timeout. This prevents the dock prompt from appearing while threat rocks
 	# are still in flight.
 	var elapsed_since_clear: float = _phase_elapsed - _boss_queue_empty_at
-	var wholes_gone: bool = _count_whole_asteroids() == 0
+	var wholes_gone: bool = _count_whole_earth_threats() == 0
 	if wholes_gone or elapsed_since_clear >= WHOLE_CLEAR_TIMEOUT:
 		_begin_respite()
 

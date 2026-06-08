@@ -65,8 +65,12 @@ theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="Backdrop/Center/SettingsPanel/Rows"]
 layout_mode = 2
-text = "SETTINGS — CONTROL SCHEME"
+text = "SETTINGS"
 horizontal_alignment = 1
+
+[node name="ControlTitle" type="Label" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+text = "Control Scheme"
 
 [node name="MouseTurnButton" type="Button" parent="Backdrop/Center/SettingsPanel/Rows"]
 layout_mode = 2
@@ -77,6 +81,40 @@ text = "Mouse turns ship; A/D strafe"
 layout_mode = 2
 toggle_mode = true
 text = "WASD controls all motion; mouse aims/fires only"
+
+[node name="DialogTitle" type="Label" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+text = "Communications"
+
+[node name="DialogToggle" type="Button" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+toggle_mode = true
+text = "Show communications"
+
+[node name="DialogSpeedTitle" type="Label" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+text = "Message display time"
+
+[node name="DialogSpeedRow" type="HBoxContainer" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+
+[node name="DialogFastButton" type="Button" parent="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "Fast"
+
+[node name="DialogNormalButton" type="Button" parent="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "Normal"
+
+[node name="DialogSlowButton" type="Button" parent="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "Slow"
 
 [node name="BackButton" type="Button" parent="Backdrop/Center/SettingsPanel/Rows"]
 layout_mode = 2
@@ -90,4 +128,8 @@ text = "Back"
 [connection signal="pressed" from="Backdrop/Center/MainPanel/Rows/QuitButton" to="." method="_on_quit_pressed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/MouseTurnButton" to="." method="_on_mouse_turn_pressed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/KeyboardTurnButton" to="." method="_on_keyboard_turn_pressed"]
+[connection signal="toggled" from="Backdrop/Center/SettingsPanel/Rows/DialogToggle" to="." method="_on_dialog_toggle_toggled"]
+[connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogFastButton" to="." method="_on_dialog_fast_pressed"]
+[connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogNormalButton" to="." method="_on_dialog_normal_pressed"]
+[connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogSlowButton" to="." method="_on_dialog_slow_pressed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/BackButton" to="." method="_on_back_pressed"]

@@ -16,6 +16,14 @@ signal total_deaths_changed(total: int)
 
 # Stage / status bar — fired by AsteroidManager, displayed by GUI.
 signal status_message(text: String)
+
+# Dialog box — queued, auto-dismissed. speaker is a display name; icon_key
+# maps to a portrait in DialogBox.PORTRAITS ("kaowitz", etc.).
+signal dialog_message(speaker: String, icon_key: String, text: String)
+
+# Dialog settings (read by DialogBox; written by PauseMenu settings).
+var dialog_enabled: bool = true
+var dialog_dismiss_sec: float = 7.0
 signal game_won()
 signal player_died()
 signal update_speed(speed: float)

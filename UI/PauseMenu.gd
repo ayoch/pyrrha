@@ -8,6 +8,10 @@ extends CanvasLayer
 @onready var settings_panel: PanelContainer = $Backdrop/Center/SettingsPanel
 @onready var mouse_turn_btn: Button = $Backdrop/Center/SettingsPanel/Rows/MouseTurnButton
 @onready var keyboard_turn_btn: Button = $Backdrop/Center/SettingsPanel/Rows/KeyboardTurnButton
+@onready var dialog_toggle: Button = $Backdrop/Center/SettingsPanel/Rows/DialogToggle
+@onready var dialog_fast_btn: Button = $Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogFastButton
+@onready var dialog_normal_btn: Button = $Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogNormalButton
+@onready var dialog_slow_btn: Button = $Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogSlowButton
 
 
 func _ready() -> void:
@@ -81,6 +85,11 @@ func _refresh_settings_state() -> void:
 	var m: int = GlobalSignals.control_mode
 	mouse_turn_btn.button_pressed = (m == GlobalSignals.ControlMode.MOUSE_TURN)
 	keyboard_turn_btn.button_pressed = (m == GlobalSignals.ControlMode.KEYBOARD_TURN)
+	dialog_toggle.button_pressed = GlobalSignals.dialog_enabled
+	var d: float = GlobalSignals.dialog_dismiss_sec
+	dialog_fast_btn.button_pressed   = (d == 4.0)
+	dialog_normal_btn.button_pressed = (d == 7.0)
+	dialog_slow_btn.button_pressed   = (d == 12.0)
 
 
 func _on_mouse_turn_pressed() -> void:
@@ -90,6 +99,26 @@ func _on_mouse_turn_pressed() -> void:
 
 func _on_keyboard_turn_pressed() -> void:
 	GlobalSignals.control_mode = GlobalSignals.ControlMode.KEYBOARD_TURN
+	_refresh_settings_state()
+
+
+func _on_dialog_toggle_toggled(pressed: bool) -> void:
+	GlobalSignals.dialog_enabled = pressed
+	_refresh_settings_state()
+
+
+func _on_dialog_fast_pressed() -> void:
+	GlobalSignals.dialog_dismiss_sec = 4.0
+	_refresh_settings_state()
+
+
+func _on_dialog_normal_pressed() -> void:
+	GlobalSignals.dialog_dismiss_sec = 7.0
+	_refresh_settings_state()
+
+
+func _on_dialog_slow_pressed() -> void:
+	GlobalSignals.dialog_dismiss_sec = 12.0
 	_refresh_settings_state()
 
 

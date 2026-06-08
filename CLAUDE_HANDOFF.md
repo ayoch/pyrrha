@@ -1,6 +1,40 @@
 # Claude Code Handoff Document
 **Last Updated:** 2026-06-08
-**Updated By:** Sonnet 4.6
+**Updated By:** Opus 4.7 (Dweezil)
+
+---
+
+## SESSION — 2026-06-08 (Opus 4.7, Dweezil) — Code review findings (no code changes)
+
+Read-only review pass over the live codebase. No fixes applied — just a punch list for the next session. Prioritized.
+
+### Bugs (will break things)
+
+1. **`Asteroid_Manager.gd:692-701` — Double-return-to-pool on cull.** `_cull_distant_and_report` has no `_dying` guard. A rock culled by distance can also have a death signal pending; both paths call `remove_child` + `_return_to_pool`, corrupting `_asteroids_in_use` and producing duplicate-child errors on next reuse. Fix: skip if `c._dying` (and/or set `_dying = true` before pool return). Same hole exists if anything mutates a rock between pool entry and `reset()`.
+2. **`Asteroid.gd:163-165` — Cross-pool name collision on damage signal.** `_on_player_hit_asteroid` filters the broadcast `player_hit_asteroid` signal by `name`, but Godot reuses `@Asteroid@NNN` names across pool members. A delayed shot resolution can decrement integrity on whatever rock currently holds the recycled name. Fix: pass node reference or `instance_id` through the signal instead of a string name.
+3. **`SaveSystem.gd:47-54` — Save/load is broken.** `Player.save()` writes `current_health`; Player's field is `health`. The loader's `node.set(i, ...)` silently no-ops. Save button on the pause menu does nothing useful. Fix or hide it.
+4. **`Mini_Map.gd:175` — Most-imminent sort comment contradicts code.** Sort runs descending by time; `_threats[-1]` ends up smallest only by accident. Pick a direction and align comment + index.
+5. **`Player.gd:147` — `find_child("DefenseLaserTurret", false, false)`.** `recursive=false` silently returns null if the turret isn't a direct child. Verify against `Player.tscn`; prefer `$DefenseLaserTurret` with null check.
+
+### Risks (likely-but-not-certain)
+
+6. **`Asteroid.gd:171-175` — 2s grace period on every spawn** including small fragments. Slow fragments can drift through the player invisible-to-collision for 2 full seconds. Shorten for fragments (0.3-0.5s) or gate by distance from spawn point.
+7. **`Asteroid_Manager.gd` — 5+ full child-iterations every physics frame.** `_count_active_asteroids`, `_cull_distant_and_report`, `_count_earth_threats`, `_any_rocks_threatening_earth`, `_check_earth_impacts` each walk `get_children()`. With pools at 200+, this is real CPU. Maintain a single `_active_asteroids: Array` updated on add/remove and compute all counts in one pass.
+8. **`Player.gd:153-156` — `_update_collision_shapes` defers the disabled flag every physics frame** regardless of whether shield state changed. Cache `_was_shield_up`, only defer on transition.
+9. **`Player.gd:599-600` — `die()` queue_frees Player while `_defense_turret` (and possibly others) hold refs.** Autoload signal disconnects handle most cases, but null `_defense_turret` before free or have the turret survive the player explicitly.
+
+### Cleanups (delete code)
+
+10. `Asteroid_Manager.gd:633-635` — identical `if free_node:` branches; collapse to single `excess.queue_free()`.
+11. `Asteroid_Manager.gd:206, 921-922` — `_boss_queue_empty_at` written, never read.
+12. `Main.tscn` `Stage_Timer` node + no-op handler — vestigial (already flagged in prior handoff).
+13. `Player.gd` — `died` signal has zero listeners; only `GlobalSignals.player_died` is used. Drop one.
+14. `UI/GUI.gd:419-425` — `_set_panel_passthrough` ignores its `_passthrough` arg.
+15. `Mini_Map.gd:75-76` — typo `top_levewwl` + dead comment.
+16. `PauseScreen.tscn` / `PauseScreen.gd`, possibly `GameOverScreen.gd` / `MainMenuScreen.gd` — vestigial; verify no imports, delete.
+
+### Recommended first-pass order
+#1, #2, #3, then #7 (perf), then #6 (fragment grace).
 
 ---
 

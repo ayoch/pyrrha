@@ -194,6 +194,8 @@ var _phase_elapsed: float = 0.0
 var _threat_schedule: Array = []   # remaining {at: float} entries this stage
 var _boss_queue: Array = []        # remaining {at, fn, args} this boss
 var _boss_started: bool = false
+var _boss_queue_empty_at: float = -1.0   # _phase_elapsed when boss queue last drained
+const WHOLE_CLEAR_TIMEOUT := 25.0        # fallback: enter respite even if whole rocks remain
 var _heal_accum_h: float = 0.0
 var _heal_accum_s: float = 0.0
 var _has_docked_this_respite: bool = false
@@ -618,6 +620,14 @@ func _count_active_asteroids() -> int:
 	return n
 
 
+func _count_whole_asteroids() -> int:
+	var n := 0
+	for c in get_children():
+		if c.is_in_group("asteroid") and "size" in c and c.size == SIZE_WHOLE:
+			n += 1
+	return n
+
+
 func _cull_distant_and_report() -> void:
 	var active := 0
 	for c in get_children():
@@ -767,6 +777,7 @@ func _start_stage(idx: int) -> void:
 	_phase_elapsed = 0.0
 	_boss_queue = []
 	_boss_started = false
+	_boss_queue_empty_at = -1.0
 	var s: Dictionary = STAGES[idx]
 	# Spread threat spawns evenly through the stage duration (after a small
 	# warm-in so the first one doesn't land instantly).
@@ -817,10 +828,17 @@ func _tick_boss(_delta: float) -> void:
 	while not _boss_queue.is_empty() and _boss_queue[0].at <= _phase_elapsed:
 		var ev = _boss_queue.pop_front()
 		callv(ev.fn, ev.args)
-	# Boss finished firing AND no more active threats from this stage → respite.
-	# We trigger respite ~3s after the last boss event so the last spawn has
-	# a moment to play out before the player gets the all-clear.
-	if _boss_queue.is_empty() and _phase_elapsed >= STAGES[_stage_index].duration + _boss_total_duration() + 3.0:
+	if not _boss_queue.is_empty():
+		return
+	# All boss events fired. Record when that happened.
+	if _boss_queue_empty_at < 0.0:
+		_boss_queue_empty_at = _phase_elapsed
+	# Wait until whole rocks are cleared — either destroyed/impacted or past a
+	# timeout. This prevents the dock prompt from appearing while threat rocks
+	# are still in flight.
+	var elapsed_since_clear: float = _phase_elapsed - _boss_queue_empty_at
+	var wholes_gone: bool = _count_whole_asteroids() == 0
+	if wholes_gone or elapsed_since_clear >= WHOLE_CLEAR_TIMEOUT:
 		_begin_respite()
 
 
@@ -842,9 +860,7 @@ func _begin_respite() -> void:
 	_heal_accum_h = 0.0
 	_heal_accum_s = 0.0
 	_has_docked_this_respite = false
-	GlobalSignals.emit_signal("status_message",
-		"Respite. Dock at the station to heal — leaving its vicinity will begin stage %d." %
-		(_stage_index + 2))
+	GlobalSignals.emit_signal("status_message", "Dock at the station for repairs and a rest.")
 
 
 func _tick_respite(delta: float) -> void:
@@ -864,11 +880,9 @@ func _tick_respite(delta: float) -> void:
 		_start_stage(_stage_index + 1)
 		return
 	if not _has_docked_this_respite:
-		GlobalSignals.emit_signal("status_message",
-			"Respite — dock at the station to heal, then depart to begin stage %d." % (_stage_index + 2))
+		GlobalSignals.emit_signal("status_message", "Dock at the station for repairs and a rest.")
 	else:
-		GlobalSignals.emit_signal("status_message",
-			"Healing at station. Leave its vicinity to begin stage %d." % (_stage_index + 2))
+		GlobalSignals.emit_signal("status_message", "Leave when you're ready.")
 
 
 func _heal_player(player, delta: float) -> void:

@@ -29,6 +29,11 @@ func _ready() -> void:
 	var mat := CanvasItemMaterial.new()
 	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	_beam.material = mat
+	var beam_curve := Curve.new()
+	beam_curve.add_point(Vector2(0.0, 1.0),  0.0, 0.0, Curve.TANGENT_LINEAR, Curve.TANGENT_LINEAR)
+	beam_curve.add_point(Vector2(0.75, 0.02), 0.0, 0.0, Curve.TANGENT_LINEAR, Curve.TANGENT_LINEAR)
+	beam_curve.add_point(Vector2(1.0, 0.45),  0.0, 0.0, Curve.TANGENT_LINEAR, Curve.TANGENT_LINEAR)
+	_beam.width_curve = beam_curve
 	add_child(_beam)
 
 	_ray = RayCast2D.new()
@@ -45,6 +50,7 @@ func _physics_process(delta: float) -> void:
 		_beam.clear_points()
 		_beam.add_point(Vector2.ZERO)
 		_beam.add_point(_beam_end)
+		_beam.add_point(_beam_end * (4.0 / 3.0))
 		_beam.visible = true
 	else:
 		_beam.clear_points()

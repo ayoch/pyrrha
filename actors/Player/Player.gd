@@ -107,6 +107,12 @@ func _ready() -> void:
 	add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	mining_beam_left.material = add_mat
 	mining_beam_right.material = add_mat
+	var beam_curve := Curve.new()
+	beam_curve.add_point(Vector2(0.0, 1.0),  0.0, 0.0, Curve.TANGENT_LINEAR, Curve.TANGENT_LINEAR)
+	beam_curve.add_point(Vector2(0.75, 0.02), 0.0, 0.0, Curve.TANGENT_LINEAR, Curve.TANGENT_LINEAR)
+	beam_curve.add_point(Vector2(1.0, 0.45),  0.0, 0.0, Curve.TANGENT_LINEAR, Curve.TANGENT_LINEAR)
+	mining_beam_left.width_curve = beam_curve
+	mining_beam_right.width_curve = beam_curve
 	for flame: AnimatedSprite2D in [
 		thruster_flame, fwd_flame_left, fwd_flame_right,
 		retro_flame_left, retro_flame_right,
@@ -381,21 +387,23 @@ func _handle_energy(delta: float) -> void:
 
 func _fire_beam(beam: Line2D, ray: RayCast2D) -> void:
 	var energy_frac: float = float(energy) / float(max_energy)
-	beam.add_point(Vector2.ZERO)
-	beam.add_point(beam.get_local_mouse_position())
 	ray.target_position = ray.get_local_mouse_position()
 	ray.force_raycast_update()
+	var endpoint: Vector2 = beam.get_local_mouse_position()
 	if ray.is_colliding():
 		var collider = ray.get_collider()
 		var hit_point: Vector2 = ray.get_collision_point()
 		if collider and "type" in collider and collider.type == "asteroid":
 			var dmg: int = max(1, int(mining_damage_per_tick * energy_frac))
 			GlobalSignals.emit_signal("player_hit_asteroid", collider.name, dmg)
-			# Occasional spark at the hit point so mining looks like cutting, not a static beam.
 			if randf() < laser_spark_chance:
 				_spawn_shock(hit_point)
-		beam.set_point_position(1, beam.to_local(hit_point))
-	# Fade the beam color to reflect reduced power.
+		endpoint = beam.to_local(hit_point)
+	# Three points: origin → focus/hit (pinch) → tail (spreads back open).
+	# The width curve maps t=0→full, t=0.75→pinch, t=1→partial splay.
+	beam.add_point(Vector2.ZERO)
+	beam.add_point(endpoint)
+	beam.add_point(endpoint * (4.0 / 3.0))
 	var alpha: float = lerpf(0.25, 1.0, energy_frac)
 	beam.modulate = Color(1.0, 1.0, 1.0, alpha)
 	beam.visible = true

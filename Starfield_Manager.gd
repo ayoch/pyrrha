@@ -8,7 +8,6 @@ var rng = RandomNumberGenerator.new()
 var last_position = Vector2.ZERO
 var randomized_rotation: int = 0
 var spacing: int = 2000
-var starfield_visibility_radius = 8000
 var counter = 0
 
 
@@ -100,9 +99,15 @@ func generate_starfield():
 	return new_starfield
 
 
-func _on_received_player_position(position):
+func _on_received_player_position(position: Vector2) -> void:
+	var vis_radius: float = _visibility_radius()
 	for child in self.get_children():
-		if child.global_position.distance_to(position) > starfield_visibility_radius:
-			child.visible = false
-		else:
-			child.visible = true
+		child.visible = child.global_position.distance_to(position) <= vis_radius
+
+
+func _visibility_radius() -> float:
+	var cam: Camera2D = get_viewport().get_camera_2d()
+	var z: float = cam.zoom.x if cam != null else 1.0
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	# Half-diagonal of the screen in world units, plus two tile-widths of padding.
+	return (vp.length() * 0.5 / z) + spacing * 2.0

@@ -292,6 +292,13 @@ func _check_earth_impacts() -> void:
 				_on_earth_impact(c, stage)
 
 
+const EXPLOSION_SCALE_FOR_SIZE := {
+	4: 1.0,    # whole
+	3: 0.55,   # large frag
+	2: 0.30,   # medium
+	1: 0.15,   # small
+}
+
 func _on_earth_impact(asteroid, stage) -> void:
 	# Snap the rock to its assigned impact point so the explosion and the
 	# disappearance both happen exactly there, regardless of frame overshoot.
@@ -299,8 +306,8 @@ func _on_earth_impact(asteroid, stage) -> void:
 	if asteroid.impact_deaths > 0:
 		_total_deaths += asteroid.impact_deaths
 		GlobalSignals.emit_signal("total_deaths_changed", _total_deaths)
-	if asteroid.size == SIZE_WHOLE and stage != null:
-		stage.spawn_explosion(asteroid.impact_point)
+	if stage != null:
+		stage.spawn_explosion(asteroid.impact_point, EXPLOSION_SCALE_FOR_SIZE.get(asteroid.size, 0.3))
 	asteroid.died_to_earth = true   # tells _on_asteroid_died to skip dust + fragmentation
 	asteroid.integrity = -1         # asteroid will report its own death next physics tick
 

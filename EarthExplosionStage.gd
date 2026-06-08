@@ -47,7 +47,7 @@ func _process(_delta: float) -> void:
 # Spawn a 3D explosion at the 3D point on Earth's surface that corresponds to
 # the given 2D world position. World position must be on Earth (within radius);
 # otherwise it's silently ignored.
-func spawn_explosion(world_pos: Vector2) -> void:
+func spawn_explosion(world_pos: Vector2, size_scale: float = 1.0) -> void:
 	if _earth_node == null or _earth_radius <= 0.0:
 		return
 	var offset: Vector2 = world_pos - _earth_node.global_position
@@ -65,6 +65,10 @@ func spawn_explosion(world_pos: Vector2) -> void:
 	# Align the explosion's local +Y axis with the outward radial direction so
 	# its "up" points away from Earth's center.
 	ex.basis = _basis_with_up(radial)
+	# Scale end_scale and lifetime by the impactor's relative size.
+	ex.end_scale *= size_scale
+	ex.start_scale *= size_scale
+	ex.lifetime *= lerpf(0.5, 1.0, size_scale)
 
 
 # Builds an orthonormal basis whose +Y axis points along `up`. Picks any

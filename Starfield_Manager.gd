@@ -1,113 +1,68 @@
 extends Node2D
 
+const TEXTURE := preload("res://2000x2000pxStarfield_2_LessStars.png")
+const ROTATIONS := [0, 90, 180, 270]
 
-var radius: int = 30000
-var center_point = Vector2.ZERO
-var position_array = []
-var rng = RandomNumberGenerator.new()
-var last_position = Vector2.ZERO
-var randomized_rotation: int = 0
 var spacing: int = 2000
-var counter = 0
+
+var _active_tiles: Dictionary = {}      # Vector2i(cx, cy) -> Sprite2D
+var _last_update_pos: Vector2 = Vector2(-999999.0, -999999.0)
 
 
-func _ready():
+func _ready() -> void:
 	GlobalSignals.connect("broadcast_player_position", Callable(self, "_on_received_player_position"))
-	rng.randomize()
-	generate_star_fields()
-
-
-func _physics_process(delta):
-	if counter % 30 == 0:
-		pass
-#		print(self.get_child_count(), " starfields currently.")
-	counter += 1
-	if counter == 60:
-		counter = 0
-
-
-func generate_star_fields():
-	var current_point = center_point
-	var distance = current_point.distance_to(center_point)
-	
-#	Move to bottom.
-	while current_point.distance_to(center_point) < radius:
-		current_point.y += spacing
-	
-
-	while true:
-		#	Move to the left.
-		while true:
-			if current_point.distance_to(center_point) > radius:
-				current_point.x += spacing
-				break
-			current_point.x -= spacing
-		
-		
-		if current_point.distance_to(center_point) > radius:
-			break
-		make_row(current_point)
-		current_point.y -= spacing
-	print(self.get_child_count(), " starfields created. Woah.")
-
-
-func make_row(current_point):
-	while current_point.distance_to(center_point) <= radius:
-		current_point.x += spacing
-		if is_duplicate_starfield(current_point) == false:
-			var sf = generate_starfield()
-			sf.global_position = current_point
-			self.add_child(sf)
-
-
-func report_distance(current_point):
-	print("Distance from current point to center is: ", current_point.distance_to(center_point))
-	print("Current point is: ", current_point)
-
-
-func clean_up_fields():
-	var deleted = 0
-	var fields = self.get_children()
-	for field in fields:
-		for other_field in fields:
-			if (field.global_position.x == other_field.global_position.x) and (field.global_position.y == other_field.global_position.y) and (field.name != other_field.name):
-				other_field.queue_free()
-				deleted += 1
-	print("Deleted " , deleted, " fields.")
-
-
-func is_duplicate_starfield(position):
-	var true_or_false = false
-	var fields = self.get_children()
-	for starfield in fields:
-		if starfield.global_position == position:
-				true_or_false = true
-	return true_or_false
-
-
-func generate_starfield():
-	var new_starfield = Sprite2D.new()
-	new_starfield.texture = load("res://2000x2000pxStarfield_2_LessStars.png")
-	randomized_rotation = rng.randi_range(1, 4)
-	if randomized_rotation == 2:
-		new_starfield.rotation_degrees = 90
-	elif randomized_rotation == 3:
-		new_starfield.rotation_degrees = 180
-	elif randomized_rotation == 4:
-		new_starfield.rotation_degrees = 270
-	
-	return new_starfield
 
 
 func _on_received_player_position(position: Vector2) -> void:
+	# Only rebuild the tile set when the player crosses into a new grid cell
+	# or moves more than half a cell from the last update point.
+	if position.distance_to(_last_update_pos) < spacing * 0.5:
+		return
+	_last_update_pos = position
+	_update_tiles(position)
+
+
+func _update_tiles(player_pos: Vector2) -> void:
 	var vis_radius: float = _visibility_radius()
-	for child in self.get_children():
-		child.visible = child.global_position.distance_to(position) <= vis_radius
+	var cell_r: int = ceili(vis_radius / float(spacing)) + 1
+	var pcx: int = int(floor(player_pos.x / float(spacing)))
+	var pcy: int = int(floor(player_pos.y / float(spacing)))
+
+	var needed: Dictionary = {}
+	for cx: int in range(pcx - cell_r, pcx + cell_r + 1):
+		for cy: int in range(pcy - cell_r, pcy + cell_r + 1):
+			var world_pos := Vector2(cx * spacing, cy * spacing)
+			if world_pos.distance_to(player_pos) <= vis_radius:
+				needed[Vector2i(cx, cy)] = true
+
+	# Free tiles that scrolled out of range.
+	for key: Vector2i in _active_tiles.keys():
+		if not needed.has(key):
+			_active_tiles[key].queue_free()
+			_active_tiles.erase(key)
+
+	# Create tiles for newly visible cells.
+	for key: Vector2i in needed:
+		if not _active_tiles.has(key):
+			var tile := _make_tile(key.x, key.y)
+			add_child(tile)
+			_active_tiles[key] = tile
+
+
+func _make_tile(cx: int, cy: int) -> Sprite2D:
+	var tile := Sprite2D.new()
+	tile.texture = TEXTURE
+	tile.rotation_degrees = ROTATIONS[_cell_hash(cx, cy) % 4]
+	tile.global_position = Vector2(cx * spacing, cy * spacing)
+	return tile
+
+
+func _cell_hash(cx: int, cy: int) -> int:
+	return abs(cx * 2654435761 + cy * 2246822519) % 1000000007
 
 
 func _visibility_radius() -> float:
 	var cam: Camera2D = get_viewport().get_camera_2d()
 	var z: float = cam.zoom.x if cam != null else 1.0
 	var vp: Vector2 = get_viewport().get_visible_rect().size
-	# Half-diagonal of the screen in world units, plus two tile-widths of padding.
 	return (vp.length() * 0.5 / z) + spacing * 2.0

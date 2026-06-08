@@ -310,10 +310,10 @@ func _check_earth_impacts() -> void:
 
 
 const EXPLOSION_SCALE_FOR_SIZE := {
-	4: 1.0,    # whole
-	3: 0.55,   # large frag
-	2: 0.30,   # medium
-	1: 0.15,   # small
+	4: 0.18,   # whole
+	3: 0.10,   # large frag
+	2: 0.06,   # medium
+	1: 0.03,   # small
 }
 
 func _on_earth_impact(asteroid, stage) -> void:

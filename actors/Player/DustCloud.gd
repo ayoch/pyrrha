@@ -31,17 +31,20 @@ const TEXTURES: Array = [
 
 # Mega puffs — long-lived; expand into something huge over time.
 @export var mega_chance: float = 0.20
-@export var mega_lifetime_min: float = 60.0
-@export var mega_lifetime_max: float = 240.0
-@export var mega_expansion_min: float = 0.2
-@export var mega_expansion_max: float = 2.0
+@export var mega_lifetime_min: float = 90.0
+@export var mega_lifetime_max: float = 480.0
+@export var mega_expansion_min: float = 0.1
+@export var mega_expansion_max: float = 0.8
 @export var mega_speed_min: float = 0.0
-@export var mega_speed_max: float = 140.0
+@export var mega_speed_max: float = 60.0
 
 # Density falloff exponent. 2.0 = physically correct 1/area for a 2D cloud
 # (aggressive fade as it grows). 1.0 = 1/linear_scale (gentler). Lower values
 # keep clouds visible longer as they expand.
 @export var density_power: float = 1.0
+# Mega puffs use a much lower exponent so they stay faintly visible as vast
+# rarified clouds drifting through the battlefield aftermath.
+@export var mega_density_power: float = 0.15
 
 # Drift drag: per-second multiplier on velocity (1.0 = no drag, 0 = stop immediately).
 @export var drag_min: float = 0.4
@@ -72,6 +75,7 @@ var _expansion_rate: float = 0.2
 var _rot_rate: float = 0.0
 var _velocity: Vector2 = Vector2.ZERO
 var _drag: float = 1.0
+var _density_power: float = 1.0
 var _on_done: Callable
 
 
@@ -87,7 +91,9 @@ func emit(at_pos: Vector2, parent_velocity: Vector2, callback: Callable) -> void
 		_lifetime = randf_range(mega_lifetime_min, mega_lifetime_max)
 		_expansion_rate = randf_range(mega_expansion_min, mega_expansion_max)
 		spray_speed = randf_range(mega_speed_min, mega_speed_max)
+		_density_power = mega_density_power
 	else:
+		_density_power = density_power
 		_lifetime = randf_range(lifetime_min, lifetime_max)
 		_expansion_rate = randf_range(expansion_min, expansion_max)
 		spray_speed = randf_range(speed_min, speed_max)
@@ -128,7 +134,7 @@ func _process(delta: float) -> void:
 	# longer as they expand. Multiplied by linear time fade for lifetime end.
 	var area_ratio: float = (scale.x * scale.y) / max(0.0001, _start_scale_x * _start_scale_y)
 	var linear_ratio: float = sqrt(area_ratio)
-	var density: float = pow(1.0 / linear_ratio, density_power)
+	var density: float = pow(1.0 / linear_ratio, _density_power)
 	var time_fade: float = 1.0 - clamp(_age / _lifetime, 0.0, 1.0)
 	modulate.a = density * time_fade
 	if _age >= _lifetime:

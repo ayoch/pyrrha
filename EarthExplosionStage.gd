@@ -27,6 +27,24 @@ var _earth_radius: float = 0.0
 func _ready() -> void:
 	add_to_group("earth_explosion_stage")
 	display.texture = viewport.get_texture()
+	# Clip the SubViewport output to a perfect circle so no explosion
+	# can bleed past Earth's curved edge.
+	var mat := ShaderMaterial.new()
+	mat.shader = _make_circle_clip_shader()
+	display.material = mat
+
+
+func _make_circle_clip_shader() -> Shader:
+	var s := Shader.new()
+	s.code = """
+shader_type canvas_item;
+void fragment() {
+	vec2 d = UV - vec2(0.5);
+	COLOR = texture(TEXTURE, UV);
+	COLOR.a *= step(length(d), 0.5);
+}
+"""
+	return s
 
 
 func _process(_delta: float) -> void:

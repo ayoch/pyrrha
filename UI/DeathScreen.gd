@@ -27,9 +27,13 @@ func _build_report() -> String:
 	var stage: int = GlobalSignals.run_stage_reached
 	var casualties: int = GlobalSignals.run_earth_casualties
 	var destroyed: int = GlobalSignals.run_asteroids_destroyed
-	return "Stage %d of %d\n%s Earth casualties\n%d asteroids destroyed" % [
+	var base := "Stage %d of %d\n%s Earth casualties\n%d asteroids destroyed" % [
 		stage, total_stages, _fmt(casualties), destroyed
 	]
+	var killer: String = GlobalSignals.last_killer_info
+	if killer != "":
+		base += "\n\n" + killer
+	return base
 
 
 func _fmt(n: int) -> String:

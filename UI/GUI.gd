@@ -9,6 +9,7 @@ extends CanvasLayer
 var player: Player
 var _score_label: Label
 var _status_label: Label
+var _turret_label: Label
 
 # --- HUD edit mode (ported from Farwend) ---
 const CORNER_SIZE := 12
@@ -35,8 +36,10 @@ func _ready() -> void:
 	GlobalSignals.player_exists.connect(_bind_player)
 	GlobalSignals.total_deaths_changed.connect(_on_deaths_changed)
 	GlobalSignals.status_message.connect(_on_status_message)
+	GlobalSignals.turret_state_changed.connect(_on_turret_state)
 	_build_score_label()
 	_build_status_label()
+	_build_turret_label()
 	_label_bar(health_bar, "HULL")
 	_label_bar(shield_bar, "SHIELD")
 	_label_bar(energy_bar, "ENERGY")
@@ -118,6 +121,28 @@ func _build_status_label() -> void:
 
 func _on_status_message(text: String) -> void:
 	_status_label.text = text
+
+
+# Independent of the bottom status bar — top-right, persistent.
+func _build_turret_label() -> void:
+	_turret_label = Label.new()
+	_turret_label.text = "TURRET: ON"
+	_turret_label.add_theme_font_size_override("font_size", 16)
+	_turret_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.55))
+	_turret_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.95))
+	_turret_label.add_theme_constant_override("outline_size", 4)
+	_turret_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_turret_label.position = Vector2(-180, 18)
+	_turret_label.size = Vector2(160, 24)
+	_turret_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_turret_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_turret_label)
+
+
+func _on_turret_state(enabled: bool) -> void:
+	_turret_label.text = "TURRET: ON" if enabled else "TURRET: OFF"
+	_turret_label.add_theme_color_override("font_color",
+		Color(0.4, 1.0, 0.55) if enabled else Color(1.0, 0.4, 0.4))
 
 
 func _format_thousands(n: int) -> String:

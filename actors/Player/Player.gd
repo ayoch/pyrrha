@@ -120,6 +120,12 @@ func _ready() -> void:
 		thruster_flame_right, thruster_flame_right2,
 	]:
 		flame.material = add_mat
+		flame.modulate = Color(1.9, 1.5, 1.0, 1.0)   # warm, additive boost
+	# Beams: thicker + brighter on top of the additive blend material.
+	mining_beam_left.width = 8.0
+	mining_beam_right.width = 8.0
+	mining_beam_left.modulate = Color(2.4, 2.4, 2.4, 1.0)
+	mining_beam_right.modulate = Color(2.4, 2.4, 2.4, 1.0)
 	mining_beam_left.visible = false
 	mining_beam_right.visible = false
 	thruster_flame.visible = false
@@ -148,6 +154,12 @@ func _update_collision_shapes() -> void:
 	var shield_up: bool = shield > 0
 	shield_hull.set_deferred("disabled", not shield_up)
 	hull_box.set_deferred("disabled", shield_up)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("turret_toggle") and _defense_turret != null:
+		_defense_turret.toggle()
+		GlobalSignals.emit_signal("turret_state_changed", _defense_turret.enabled)
 
 
 func _physics_process(delta: float) -> void:
@@ -512,6 +524,9 @@ func _resolve_slide_collisions(pre_move_vel: Vector2) -> void:
 			health = clamp(health - int(ceil(dmg_remaining)), 0, max_health)
 			GlobalSignals.emit_signal("player_health_changed", health)
 			if health <= 0:
+				var info: String = _killer_report(other, closing, raw_dmg)
+				print(info)
+				GlobalSignals.last_killer_info = info
 				die()
 				return
 		# Pulverize the asteroid — any rock's integrity is dwarfed by impact KE.
@@ -583,6 +598,43 @@ func die() -> void:
 	died.emit()
 	GlobalSignals.emit_signal("player_died")
 	queue_free()
+
+
+# Diagnostic dump about whatever rock just killed us. Stored on GlobalSignals
+# so DeathScreen can show it; printed so it lands in the editor log too.
+func _killer_report(other, closing: float, raw_dmg: float) -> String:
+	var lines: PackedStringArray = []
+	lines.append("--- KILLED BY ---")
+	lines.append("name=%s  species=%s  size=%s  mass=%.2f  is_threat=%s" % [
+		other.name,
+		(other.species if "species" in other else "?"),
+		(str(other.size) if "size" in other else "?"),
+		(other.mass if "mass" in other else 0.0),
+		(str(other.is_threat) if "is_threat" in other else "?")
+	])
+	var sprite_visible: String = "?"
+	var tex_path: String = "(no sprite child)"
+	if other.has_node("Sprite2D"):
+		var sp: Sprite2D = other.get_node("Sprite2D")
+		sprite_visible = str(sp.visible)
+		tex_path = "(null)" if sp.texture == null else sp.texture.resource_path
+	lines.append("root.visible=%s  sprite.visible=%s  texture=%s" % [
+		str(other.visible), sprite_visible, tex_path
+	])
+	lines.append("modulate=%s  z_index=%d  scale=%s" % [
+		str(other.modulate), other.z_index, str(other.scale)
+	])
+	lines.append("pos=(%.0f, %.0f)" % [other.global_position.x, other.global_position.y])
+	if "asteroid_velocity" in other:
+		var v: Vector2 = other.asteroid_velocity
+		lines.append("velocity=%.0f m/s @ %.0f°" % [v.length(), rad_to_deg(v.angle())])
+	lines.append("collision_layer=%d  collision_mask=%d" % [other.collision_layer, other.collision_mask])
+	if "has_impact_fate" in other:
+		lines.append("has_impact_fate=%s  died_to_earth=%s" % [
+			str(other.has_impact_fate), str(other.died_to_earth)
+		])
+	lines.append("impact: closing=%.0f m/s  raw_dmg=%.1f" % [closing, raw_dmg])
+	return "\n".join(lines)
 
 
 func save() -> Dictionary:

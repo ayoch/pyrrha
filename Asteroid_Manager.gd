@@ -207,10 +207,17 @@ var _boss_queue_empty_at: float = -1.0   # _phase_elapsed when boss queue last d
 # Threat rocks waiting for a slot under the stage's max_threats cap. Each entry
 # is a Dictionary {velocity_mult, position_override, size}.
 var _threat_backlog: Array = []
+# Sleeper spawn schedule for the current stage. Each entry is just {at: float}.
+var _sleeper_schedule: Array = []
 const WHOLE_CLEAR_TIMEOUT := 25.0        # fallback: enter respite even if whole rocks remain
 var _heal_accum_h: float = 0.0
 var _heal_accum_s: float = 0.0
 var _has_docked_this_respite: bool = false
+
+# Casualty log — every Earth impact gets a row. Cap to keep memory bounded.
+# CasualtyReport reads from this via group lookup.
+const CASUALTY_LOG_CAP := 500
+var _casualty_log: Array = []
 var _frequency_counter: int = 0
 var _rng := RandomNumberGenerator.new()
 
@@ -246,6 +253,7 @@ var _trim_accum: float = 0.0
 
 func _ready() -> void:
 	_rng.randomize()
+	add_to_group("asteroid_manager")
 	GlobalSignals.connect("asteroid_died", Callable(self, "_on_asteroid_died"))
 	GlobalSignals.connect("player_died", Callable(self, "_on_player_died"))
 	GlobalSignals.station_shop_departed.connect(_on_shop_departed)
@@ -324,6 +332,20 @@ func _on_earth_impact(asteroid, stage) -> void:
 	if asteroid.impact_deaths > 0:
 		_total_deaths += asteroid.impact_deaths
 		GlobalSignals.emit_signal("total_deaths_changed", _total_deaths)
+	# Log every impact (even 0-death ocean strikes) so the casualty report
+	# shows the full picture of what's hitting Earth.
+	_casualty_log.append({
+		"time_ms": Time.get_ticks_msec(),
+		"size": asteroid.size,
+		"pos": asteroid.impact_point,
+		"deaths": asteroid.impact_deaths,
+		"is_threat": ("is_threat" in asteroid and asteroid.is_threat),
+		"is_sleeper": ("is_sleeper" in asteroid and asteroid.is_sleeper),
+		"species": (asteroid.species if "species" in asteroid else "?"),
+		"stage": _stage_index + 1,
+	})
+	if _casualty_log.size() > CASUALTY_LOG_CAP:
+		_casualty_log.pop_front()
 	if stage != null:
 		stage.spawn_explosion(asteroid.impact_point, EXPLOSION_SCALE_FOR_SIZE.get(asteroid.size, 0.3))
 	asteroid.died_to_earth = true   # tells _on_asteroid_died to skip dust + fragmentation
@@ -450,9 +472,11 @@ func _start_spawn_timer() -> void:
 
 
 func _on_Asteroid_Spawn_Timer_timeout() -> void:
-	# Regular waves only during the ACTIVE phase. Threats + bosses are scheduled
-	# separately in _advance_phase.
-	if _phase == Phase.ACTIVE:
+	# Regular waves only during the ACTIVE phase BEFORE the boss starts. Once
+	# the boss is firing, no new nuisance rocks — otherwise random spawns can
+	# keep rolling onto Earth-collision trajectories and the clear-wait phase
+	# never ends.
+	if _phase == Phase.ACTIVE and not _boss_started:
 		var room := maximum_number_asteroids - _count_active_asteroids()
 		if room > 0:
 			var wave_size: int = min(_rng.randi_range(1, 16), room)
@@ -653,7 +677,15 @@ func _count_earth_threats() -> int:
 
 
 func _any_rocks_threatening_earth() -> bool:
-	return _count_earth_threats() > 0
+	# ANY rock currently on a collision course with Earth counts — not just
+	# `is_threat` ones. Nuisance rocks (random spawns that happen to be aimed
+	# at Earth) still need to be dealt with before respite can begin.
+	for c in get_children():
+		if not c.is_in_group("asteroid"):
+			continue
+		if "has_impact_fate" in c and c.has_impact_fate:
+			return true
+	return false
 
 
 func _cull_distant_and_report() -> void:
@@ -816,6 +848,14 @@ func _start_stage(idx: int) -> void:
 	for i in s.threats:
 		var t: float = (float(i) + 0.5) / float(s.threats + 1) * s.duration
 		_threat_schedule.append({"at": t})
+	# Sleepers: stage 1 always gets one (so the player encounters them at least
+	# once for diagnostic/learning). Later stages use sleeper_chance to roll one
+	# at a random point in the stage.
+	_sleeper_schedule.clear()
+	if idx == 0:
+		_sleeper_schedule.append({"at": 5.0})
+	elif s.get("sleeper_chance", 0.0) > 0.0 and _rng.randf() < s.sleeper_chance:
+		_sleeper_schedule.append({"at": _rng.randf_range(0.2, 0.7) * s.duration})
 	GlobalSignals.emit_signal("status_message",
 		"Stage %d of %d — survive!" % [idx + 1, STAGES.size()])
 
@@ -851,6 +891,9 @@ func _tick_threats() -> void:
 	while not _threat_schedule.is_empty() and _threat_schedule[0].at <= _phase_elapsed:
 		_threat_schedule.pop_front()
 		_threat_backlog.append({"velocity_mult": 1.0, "position_override": null, "size": SIZE_WHOLE})
+	while not _sleeper_schedule.is_empty() and _sleeper_schedule[0].at <= _phase_elapsed:
+		_sleeper_schedule.pop_front()
+		_spawn_sleeper()
 	# When stage duration elapses, hand off to the boss (if not already started).
 	if not _boss_started and _phase_elapsed >= STAGES[_stage_index].duration:
 		_boss_started = true
@@ -877,9 +920,10 @@ func _tick_boss(_delta: float) -> void:
 		return
 	if _boss_queue_empty_at < 0.0:
 		_boss_queue_empty_at = _phase_elapsed
-	var elapsed_since_clear: float = _phase_elapsed - _boss_queue_empty_at
-	var threats_gone: bool = not _any_rocks_threatening_earth()
-	if threats_gone or elapsed_since_clear >= WHOLE_CLEAR_TIMEOUT:
+	# Strict: do not enter respite until every rock with a collision fate is
+	# off the board. No fallback timeout — the user explicitly wants the
+	# stage-end message to wait until there are genuinely no incoming threats.
+	if not _any_rocks_threatening_earth():
 		_begin_respite()
 
 
@@ -987,6 +1031,29 @@ func _spawn_threat_rock(velocity_mult: float = 1.0, position_override: Variant =
 
 func _spawn_fastball() -> void:
 	_threat_backlog.append({"velocity_mult": FASTBALL_SPEED_MULT, "position_override": null, "size": SIZE_WHOLE})
+
+
+# Type 1 sleeper: stationary, tinted red. Spawns just outside the player's
+# activation radius so they can see it sneak up. When the player closes within
+# SLEEPER_ACTIVATE_RADIUS (set in Asteroid.gd), it wakes and chases.
+func _spawn_sleeper() -> void:
+	var player = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return
+	var rock := _take_from_pool()
+	var species := _random_species()
+	var tex: Texture2D = _whole_texture(species)
+	# Place ~2800 units from the player — just outside the wake radius so it's
+	# visible but doesn't trigger immediately.
+	var angle: float = _rng.randf() * TAU
+	var spawn_pos: Vector2 = player.global_position + Vector2(cos(angle), sin(angle)) * 2800.0
+	rock.reset(species, SIZE_WHOLE, false, tex,
+			   _polygon_for_texture.get(tex, PackedVector2Array()),
+			   SIZE_SCALES[SIZE_WHOLE], spawn_pos, Vector2.ZERO,
+			   _rng.randf_range(-0.1, 0.1), 100)
+	rock.is_sleeper = true
+	rock.modulate = Asteroid.SLEEPER_TINT
+	_spawn_queue.append(rock)
 
 
 func _spawn_clump(count: int, big: bool) -> void:

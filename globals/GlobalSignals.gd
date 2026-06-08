@@ -49,6 +49,13 @@ func spend_credits(amount: int) -> void:
 var run_stage_reached: int = 1
 var run_earth_casualties: int = 0
 var run_asteroids_destroyed: int = 0
+# Diagnostic — written by Player on the lethal collision so the DeathScreen
+# can show which rock killed us (used to debug invisible-asteroid bugs etc.).
+var last_killer_info: String = ""
+
+# Deaths tally broken down by impactor size so the player can see which class
+# of rock is actually doing the damage. Keys are Asteroid.size (4=whole, 1=small).
+var deaths_by_size: Dictionary = {4: 0, 3: 0, 2: 0, 1: 0}
 
 func reset_progress() -> void:
 	credits = 0
@@ -60,6 +67,7 @@ func reset_progress() -> void:
 	emit_signal("credits_changed", credits)
 signal game_won()
 signal player_died()
+signal turret_state_changed(enabled: bool)
 signal update_speed(speed: float)
 
 # Combat

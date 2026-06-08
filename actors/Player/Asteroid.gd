@@ -34,6 +34,16 @@ var died_to_earth: bool = false
 # by AsteroidManager._spawn_threat_rock so the threat cap counts correctly.
 var is_threat: bool = false
 
+# Sleeper (Type 1 — dive): spawns stationary, tinted dark red. Activates when
+# the player comes within sleeper_activate_radius; once active, accelerates
+# toward the player. Tracked here so _physics_process can drive its behavior
+# without manager polling.
+var is_sleeper: bool = false
+var sleeper_active: bool = false
+const SLEEPER_ACTIVATE_RADIUS := 2200.0
+const SLEEPER_CHASE_ACCEL := 600.0   # units/sec^2 once activated
+const SLEEPER_TINT := Color(0.55, 0.18, 0.18, 1.0)
+
 # Mass proxy by size. Roughly scale² so it tracks volume in our 2D world.
 # Read by the player's collision handler for kinetic damage + plow-through.
 const MASS_FOR_SIZE := {
@@ -83,6 +93,9 @@ func reset(p_species: String, p_size: int, p_is_fragment: bool,
 	has_impact_fate = false
 	died_to_earth = false
 	is_threat = false
+	is_sleeper = false
+	sleeper_active = false
+	modulate = Color.WHITE   # reset tint in case last cycle was a sleeper
 	# Collision layout: fragments only collide with the player; whole rocks
 	# Whole rocks and fragments both collide only with the player.
 	# Whole-on-whole collision is O(n²) in clump size with no gameplay response.
@@ -118,16 +131,33 @@ func _ensure_node_refs() -> void:
 		no_physics_timer = $No_Physics_Timer
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if _dying:
 		return
 	if integrity <= 0:
 		_dying = true
 		GlobalSignals.emit_signal("asteroid_died", self)
 		return
+	if is_sleeper:
+		_tick_sleeper(delta)
 	set_velocity(asteroid_velocity)
 	move_and_slide()
 	rotation += rotation_rate
+
+
+func _tick_sleeper(delta: float) -> void:
+	var player = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return
+	if not sleeper_active:
+		var dist: float = global_position.distance_to(player.global_position)
+		if dist <= SLEEPER_ACTIVATE_RADIUS:
+			sleeper_active = true
+			modulate = Color.WHITE   # drop the tint; ship is no longer sneaking
+		return
+	# Active sleeper: accelerate toward the player (no max speed cap).
+	var dir: Vector2 = (player.global_position - global_position).normalized()
+	asteroid_velocity += dir * SLEEPER_CHASE_ACCEL * delta
 
 
 func _on_player_hit_asteroid(asteroid_name: String, damage: int) -> void:

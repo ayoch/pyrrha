@@ -7,6 +7,7 @@ class_name DefenseLaserTurret
 @export var beam_color: Color = Color(1.0, 0.45, 0.0, 1.0)
 @export var beam_flash_duration: float = 0.07
 
+var enabled: bool = true
 var energy_fraction: float = 1.0
 var _cooldown: float = 0.0
 var _beam_timer: float = 0.0
@@ -14,6 +15,9 @@ var _beam_end: Vector2 = Vector2.ZERO
 var _beam: Line2D
 var _ray: RayCast2D
 var _active_target: bool = false
+var _state_indicator: Polygon2D
+const COLOR_ON := Color(0.2, 1.0, 0.3, 0.95)
+const COLOR_OFF := Color(0.85, 0.2, 0.2, 0.95)
 
 
 func _ready() -> void:
@@ -41,8 +45,26 @@ func _ready() -> void:
 	_ray.enabled = true
 	add_child(_ray)
 
+	# Persistent indicator so the player can always see the turret + its state.
+	# Small forward-pointing triangle: green when armed, red when disabled.
+	_state_indicator = Polygon2D.new()
+	_state_indicator.polygon = PackedVector2Array([
+		Vector2(10, 0), Vector2(-6, 6), Vector2(-6, -6)
+	])
+	_state_indicator.color = COLOR_ON
+	_state_indicator.z_index = 7
+	_state_indicator.z_as_relative = false
+	add_child(_state_indicator)
+
 
 func _physics_process(delta: float) -> void:
+	_state_indicator.color = COLOR_ON if enabled else COLOR_OFF
+	if not enabled:
+		_beam.clear_points()
+		_beam.visible = false
+		_active_target = false
+		return
+
 	_cooldown = max(0.0, _cooldown - delta)
 	_beam_timer = max(0.0, _beam_timer - delta)
 
@@ -68,6 +90,10 @@ func _physics_process(delta: float) -> void:
 
 	_fire(target)
 	_cooldown = 1.0 / fire_rate_hz
+
+
+func toggle() -> void:
+	enabled = not enabled
 
 
 func is_firing() -> bool:

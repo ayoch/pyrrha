@@ -51,6 +51,10 @@ text = "Main Menu"
 layout_mode = 2
 text = "Settings"
 
+[node name="CasualtyButton" type="Button" parent="Backdrop/Center/MainPanel/Rows"]
+layout_mode = 2
+text = "Casualty Report"
+
 [node name="QuitButton" type="Button" parent="Backdrop/Center/MainPanel/Rows"]
 layout_mode = 2
 text = "Quit"
@@ -167,6 +171,41 @@ text = "Reset HUD Layout"
 layout_mode = 2
 text = "Back"
 
+[node name="CasualtyPanel" type="PanelContainer" parent="Backdrop/Center"]
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="Backdrop/Center/CasualtyPanel"]
+layout_mode = 2
+custom_minimum_size = Vector2(680, 480)
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Backdrop/Center/CasualtyPanel/Rows"]
+layout_mode = 2
+text = "CASUALTY REPORT"
+horizontal_alignment = 1
+
+[node name="Summary" type="Label" parent="Backdrop/Center/CasualtyPanel/Rows"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+
+[node name="Scroll" type="ScrollContainer" parent="Backdrop/Center/CasualtyPanel/Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 380)
+
+[node name="CasualtyText" type="RichTextLabel" parent="Backdrop/Center/CasualtyPanel/Rows/Scroll"]
+layout_mode = 2
+custom_minimum_size = Vector2(660, 0)
+size_flags_horizontal = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="CasualtyBackButton" type="Button" parent="Backdrop/Center/CasualtyPanel/Rows"]
+layout_mode = 2
+text = "Back"
+
 [connection signal="pressed" from="Backdrop/Center/MainPanel/Rows/ResumeButton" to="." method="_on_resume_pressed"]
 [connection signal="pressed" from="Backdrop/Center/MainPanel/Rows/SaveButton" to="." method="_on_save_pressed"]
 [connection signal="pressed" from="Backdrop/Center/MainPanel/Rows/RestartButton" to="." method="_on_restart_pressed"]
@@ -185,3 +224,5 @@ text = "Back"
 [connection signal="toggled" from="Backdrop/Center/SettingsPanel/Rows/HUDSnapRow/ShowGridToggle" to="." method="_on_show_grid_toggled"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/ResetHUDButton" to="." method="_on_reset_hud_pressed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="Backdrop/Center/MainPanel/Rows/CasualtyButton" to="." method="_on_casualty_pressed"]
+[connection signal="pressed" from="Backdrop/Center/CasualtyPanel/Rows/CasualtyBackButton" to="." method="_on_back_pressed"]

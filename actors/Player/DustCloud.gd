@@ -16,8 +16,11 @@ const TEXTURES: Array = [
 
 # All puffs start very small and expand outward — initial scale shared between
 # normal and mega puffs; mega vs normal differs by lifetime + expansion + speed.
+# All dust starts SMALL — universally. The eventual size of a puff is
+# determined purely by how long it lives × how fast it expands. "Big" clouds
+# earn their size from growth, not from spawning large.
 @export var start_scale_min: float = 0.02
-@export var start_scale_max: float = 0.20
+@export var start_scale_max: float = 0.08
 
 # Normal puffs — wide spread across lifetimes, growth, drift.
 @export var lifetime_min: float = 4.0

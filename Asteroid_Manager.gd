@@ -566,6 +566,13 @@ func _spawn_dust(at_pos: Vector2, parent_size: int, parent_velocity: Vector2) ->
 			_rng.randf_range(-DUST_POSITION_JITTER, DUST_POSITION_JITTER),
 			_rng.randf_range(-DUST_POSITION_JITTER, DUST_POSITION_JITTER))
 		d.emit(at_pos + jitter, parent_velocity, Callable(self, "_return_dust"))
+	# Rarely, a whole rock leaves one large ghost wisp that drifts away slowly.
+	if parent_size == SIZE_WHOLE and _rng.randf() < 0.20:
+		var g = _dust_pool.pop_back() if not _dust_pool.is_empty() else _make_fresh_dust()
+		_dust_in_use += 1
+		if _dust_in_use > _dust_high_water:
+			_dust_high_water = float(_dust_in_use)
+		g.emit_ghost(at_pos, Callable(self, "_return_dust"))
 
 
 func _return_dust(d) -> void:

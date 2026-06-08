@@ -1,9 +1,9 @@
-extends TextEdit
+extends Label
 
 
-func _ready():
-	GlobalSignals.connect("update_speed", Callable(self, "on_receive_speed"))
+func _ready() -> void:
+	GlobalSignals.update_speed.connect(_on_receive_speed)
 
 
-func on_receive_speed(speed):
-	self.text = str(speed)
+func _on_receive_speed(speed: float) -> void:
+	text = "speed: %0.0f" % speed

@@ -1,173 +1,145 @@
 extends CharacterBody2D
 class_name Asteroid
 
-#Physics frequency timer.
-var frequency_counter: int = 0
-@onready var updates_per_second: int = 1
+# A mineable, breakable space rock. Lifecycle is owned by AsteroidManager:
+# this script just integrates its own motion, reports damage, and announces
+# its own death via the asteroid_died signal. The manager handles pooling,
+# fragmentation, and tree mutations.
 
-#Basic attributes.
-var rotation_rate: float = 0.0
+const TYPE_STRING := "asteroid"
+
+# Read by the player (collision checks) and the manager (fragmentation).
+var type := TYPE_STRING
+var species: String = "C11"
+var size: int = 4                  # 4=whole, 3=large frag, 2=medium, 1=small
+var is_fragment: bool = false
+var can_break: bool = true
 var integrity: int = 100
-var asteroid_velocity = Vector2.ZERO
-@export var is_boss = false
+var asteroid_velocity: Vector2 = Vector2.ZERO
+var rotation_rate: float = 0.0
+var mass: float = 1.0
 
-#Self references.
-@onready var sprite = $Sprite2D
-@onready var physics_shape = $Physics_Shape
-@onready var projectile_shape = $Projectile_Shape
-@onready var no_physics_timer = $No_Physics_Timer
+# Set by AsteroidManager when this rock first qualifies as an Earth threat.
+# The rock continues along its trajectory and dies on reaching impact_point;
+# impact_deaths is what gets added to the cumulative casualty score if it
+# does so. Cleared on reset.
+var impact_point: Vector2 = Vector2.ZERO
+var impact_deaths: int = 0
+var has_impact_fate: bool = false
+# Set by AsteroidManager when this rock's death was an Earth impact; tells
+# the death handler to skip dust + fragmentation (the rock is gone, not broken).
+var died_to_earth: bool = false
 
-#Attributes for breaks.
-var type = "asteroid"
-var species = "C11"
-var size: int = 4
-var can_break = true
-@export var is_active: bool = true
-var is_fragment = false
+# Mass proxy by size. Roughly scale² so it tracks volume in our 2D world.
+# Read by the player's collision handler for kinetic damage + plow-through.
+const MASS_FOR_SIZE := {
+	4: 1.0,    # whole
+	3: 0.45,   # large frag
+	2: 0.22,   # medium
+	1: 0.07,   # small
+}
 
-var stored_texture_path = ""
+# Latched at death to avoid emitting asteroid_died twice while the manager
+# is removing us from the tree.
+var _dying: bool = false
 
-var rng = RandomNumberGenerator.new()
+@onready var sprite: Sprite2D = $Sprite2D
+@onready var physics_shape: CollisionPolygon2D = $Physics_Shape
+@onready var projectile_shape: CollisionPolygon2D = $Projectile_Shape
+@onready var no_physics_timer: Timer = $No_Physics_Timer
 
 
-func _ready():
-	physics_shape.polygon = projectile_shape.polygon
+func _ready() -> void:
+	GlobalSignals.connect("player_hit_asteroid", Callable(self, "_on_player_hit_asteroid"))
+	# Grace period is started explicitly by AsteroidManager *after* add_child,
+	# so the timer is guaranteed to be in the tree when start() runs.
+
+
+# Repurpose this asteroid for a new spawn. Called by AsteroidManager when
+# pulling from the pool. All state needed for the new life — including the
+# silhouette polygon and visual scale — is set here so nothing leaks from the
+# previous use.
+#
+# IMPORTANT: this can run on pool members that haven't entered the tree yet,
+# so we cannot rely on @onready bindings being resolved. _ensure_node_refs()
+# binds them directly via get_node so reset() works pre-tree.
+func reset(p_species: String, p_size: int, p_is_fragment: bool,
+		   p_texture: Texture2D, p_polygon: PackedVector2Array,
+		   p_sprite_scale: float, p_position: Vector2,
+		   p_velocity: Vector2, p_rotation_rate: float,
+		   p_integrity: int) -> void:
+	_ensure_node_refs()
+	species = p_species
+	size = p_size
+	is_fragment = p_is_fragment
+	can_break = not p_is_fragment       # only whole rocks fragment further
+	mass = MASS_FOR_SIZE.get(p_size, 1.0)
+	impact_point = Vector2.ZERO
+	impact_deaths = 0
+	has_impact_fate = false
+	died_to_earth = false
+	# Collision layout: fragments only collide with the player; whole rocks
+	# collide with player + other whole rocks. Keeps physics pair count linear
+	# in fragment count instead of quadratic.
+	if p_is_fragment:
+		collision_layer = 4   # LAYER_FRAGMENT
+		collision_mask = 1    # MASK_FRAGMENT (player only)
+	else:
+		collision_layer = 2   # LAYER_WHOLE
+		collision_mask = 3    # MASK_WHOLE (player + other wholes)
+	integrity = p_integrity
+	position = p_position
+	rotation = 0.0
+	asteroid_velocity = p_velocity
+	rotation_rate = p_rotation_rate
+	velocity = Vector2.ZERO
+	_dying = false
+	visible = true
+	sprite.texture = p_texture
+	sprite.scale = Vector2(p_sprite_scale, p_sprite_scale)
+	if p_polygon.size() >= 3:
+		physics_shape.polygon = p_polygon
+		projectile_shape.polygon = p_polygon
+	# Disable physics immediately (safe to set property pre-tree); start_grace_period()
+	# is called by the manager after add_child to actually start the timer.
 	physics_shape.disabled = true
-	GlobalSignals.connect("player_hit_asteroid", Callable(self, "on_player_hit_asteroid"))
-	rng.randomize()
-	self.integrity = rng.randi_range(100, 300)
-	set_no_physics_timer()
-	assign_species()
-
-#C makes up 75% of all asteroids, S 17%, M 8%.
-func assign_species():
-	var type_float = rng.randf_range(0, 1)
-	if type_float >= 0.0 and type_float <= 0.75: #If it's a C.
-		species = "C11"
-#		var base_int = rng.randi_range(1, 2) #Choose between the base models available.
-#		var break_int = rng.randi_range(1, 2) #Choose between the breaks available.
-#		if base_int == 1:
-#			if break_int == 1:
-#				species = "C11"
-#			elif break_int == 2:
-#				species = "C12"
-#		elif
-	elif type_float > 0.75 and type_float <= 0.92:
-		species = "S11"
-	elif type_float > 0.92 and type_float <= 1.0:
-		species = "M11"
-	else: species = "C11"
 
 
-func on_player_hit_asteroid(name, damage):
-	if self.name == name:
-		self.integrity -= damage
+func _ensure_node_refs() -> void:
+	if sprite == null:
+		sprite = $Sprite2D
+		physics_shape = $Physics_Shape
+		projectile_shape = $Projectile_Shape
+		no_physics_timer = $No_Physics_Timer
 
 
-func manage_physics_frequency():
-	frequency_counter += 1
-#	if frequency_counter % (60/updates_per_second) == 0:
-#		pass
-	if frequency_counter == 60:
-		frequency_counter = 1
-
-
-func _physics_process(delta):
-	if !sprite.texture:
-		print(self.name, " may have something wrong with it.")
-	manage_physics_frequency()
-#	GlobalSignals.emit_signal("minimap_ping", self.position, self.rotation, sprite.texture)
-	if self.integrity <= 0:
-#		print("An asteroid is trying to break apart.")
+func _physics_process(_delta: float) -> void:
+	if _dying:
+		return
+	if integrity <= 0:
+		_dying = true
 		GlobalSignals.emit_signal("asteroid_died", self)
-#		self.queue_free()
-	if self.is_inside_tree() == true:
-		set_velocity(asteroid_velocity)
-		move_and_slide()
-		rotation += rotation_rate
-
-func _on_Area2D_area_entered():
-	print("Body entered.")
+		return
+	set_velocity(asteroid_velocity)
+	move_and_slide()
+	rotation += rotation_rate
 
 
-func _on_Area2D_body_entered(body):
-	print(body.name, " entered.")
+func _on_player_hit_asteroid(asteroid_name: String, damage: int) -> void:
+	if name == asteroid_name:
+		integrity -= damage
 
 
-func delay_physics(time: float):
+# Brief delay before physics collision engages, so a fresh fragment doesn't
+# instantly re-collide with its siblings or with the parent it just split from.
+# Public — called by AsteroidManager after add_child guarantees we're in tree.
+func start_grace_period() -> void:
+	_ensure_node_refs()
 	physics_shape.disabled = true
+	no_physics_timer.wait_time = 2.0
+	no_physics_timer.start()
 
 
-func set_no_physics_timer():
-	if no_physics_timer: 
-		no_physics_timer.wait_time = 2
-		no_physics_timer.start()
-
-
-func _on_No_Physics_Timer_timeout():
-#	print("No physics timer activated.")
-	if self.is_active == true:
-		physics_shape.disabled = false
-		projectile_shape.disabled = false
-	no_physics_timer.stop()
-	
-
-
-func activate():
-	self.visible = true
+func _on_No_Physics_Timer_timeout() -> void:
 	physics_shape.disabled = false
-	projectile_shape.disabled = false
-	self.process_mode = Node.PROCESS_MODE_INHERIT
-
-
-
-
-func update_physics_shape():
-	var image = Image.new()
-#	print(path)
-	var texture = $Sprite2D.texture.get_data()
-	image = texture
-
-	var bitmap = BitMap.new()
-	bitmap.create_from_image_alpha(image)
-#	print("Sprite's transform x is times texture width: ", $Sprite.scale.x * texture.get_width())
-	var vec = Vector2(texture.get_height(), texture.get_width())
-#	var vec = Vector2(texture.get_height(), texture.get_width())
-	
-#	print("The bitmap size is: ", bitmap.get_size())
-	var polygons = bitmap.opaque_to_polygons(Rect2(Vector2(0, 0), vec ))
-#	print("Polygons is: ", polygons)
-#	print("This is the polygon count: ", polygons.size())
-	for poly in polygons:
-#		var collider = CollisionPolygon2D.new()
-#		collider.polygon = poly
-#		projectile_shape.polygon = poly
-#		if physics_shape:
-#			physics_shape.polygon = poly
-#		else:
-##			pass
-#			print("There was an issue with the physics shape.")
-		var stored_magnitude
-		$Physics_Shape.polygon = poly
-		var c = 0
-		for point in $Physics_Shape.polygon:
-			c = c+1
-#			print("Before change the point is: ", point)
-#			stored_magnitude = point.length()
-#			point = point.normalized()
-			point.x = point.x * $Sprite2D.scale.x
-			point.y = point.y * $Sprite2D.scale.y
-#			point = (point * $Physics_Shape.scale.x)
-#			print("After change the point is: ", point)
-#			print($Physics_Shape.polygon)
-		print("Changed this number of points: ", c)
-
-func get_image_path():
-	if self.species == "C11":
-		return 
-
-
-func _on_Asteroid_tree_entered():
-	pass
-#	if is_fragment:
-#		set_no_physics_timer()
+	no_physics_timer.stop()

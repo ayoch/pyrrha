@@ -1,22 +1,14 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=2 format=3]
 
-[ext_resource path="res://assets/White-circle.png" type="Texture2D" id=1]
-[ext_resource path="res://actors/Player/Mini_Map.gd" type="Script" id=2]
-[ext_resource path="res://Planet_Earth.png" type="Texture2D" id=3]
+[ext_resource type="Script" path="res://actors/Player/Mini_Map.gd" id="2"]
 
 [node name="Mini_Map" type="Node2D"]
-position = Vector2( 109, 92 )
-script = ExtResource( 2 )
-
-[node name="background" type="Sprite2D" parent="."]
-texture = ExtResource( 1 )
+position = Vector2(109, 92)
+script = ExtResource("2")
 
 [node name="earth" type="Sprite2D" parent="."]
-scale = Vector2( 0.02, 0.02 )
-texture = ExtResource( 3 )
 
 [node name="player" type="Sprite2D" parent="."]
-scale = Vector2( 0.1, 0.1 )
 
 [node name="asteroid" type="Sprite2D" parent="."]
 

@@ -1,0 +1,97 @@
+extends CanvasLayer
+
+# Escape-triggered pause menu. Pauses the SceneTree while visible. Settings
+# panel toggles between control schemes (stored on GlobalSignals so the Player
+# script picks it up live).
+
+@onready var main_panel: PanelContainer = $Backdrop/Center/MainPanel
+@onready var settings_panel: PanelContainer = $Backdrop/Center/SettingsPanel
+@onready var mouse_turn_btn: Button = $Backdrop/Center/SettingsPanel/Rows/MouseTurnButton
+@onready var keyboard_turn_btn: Button = $Backdrop/Center/SettingsPanel/Rows/KeyboardTurnButton
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	visible = false
+	settings_panel.visible = false
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("pause"):
+		if visible:
+			if settings_panel.visible:
+				_back_to_main()
+			else:
+				_hide_menu()
+		else:
+			_show_menu()
+		get_viewport().set_input_as_handled()
+
+
+func _show_menu() -> void:
+	visible = true
+	main_panel.visible = true
+	settings_panel.visible = false
+	get_tree().paused = true
+
+
+func _hide_menu() -> void:
+	visible = false
+	get_tree().paused = false
+
+
+func _back_to_main() -> void:
+	settings_panel.visible = false
+	main_panel.visible = true
+
+
+# ---- Main panel buttons -----------------------------------------------------
+
+func _on_resume_pressed() -> void:
+	_hide_menu()
+
+
+func _on_save_pressed() -> void:
+	GlobalSignals.emit_signal("request_save")
+
+
+func _on_restart_pressed() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://Main.tscn")
+
+
+func _on_main_menu_pressed() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://UI/MainMenuScreen.tscn")
+
+
+func _on_settings_pressed() -> void:
+	main_panel.visible = false
+	settings_panel.visible = true
+	_refresh_settings_state()
+
+
+func _on_quit_pressed() -> void:
+	get_tree().quit()
+
+
+# ---- Settings panel ---------------------------------------------------------
+
+func _refresh_settings_state() -> void:
+	var m: int = GlobalSignals.control_mode
+	mouse_turn_btn.button_pressed = (m == GlobalSignals.ControlMode.MOUSE_TURN)
+	keyboard_turn_btn.button_pressed = (m == GlobalSignals.ControlMode.KEYBOARD_TURN)
+
+
+func _on_mouse_turn_pressed() -> void:
+	GlobalSignals.control_mode = GlobalSignals.ControlMode.MOUSE_TURN
+	_refresh_settings_state()
+
+
+func _on_keyboard_turn_pressed() -> void:
+	GlobalSignals.control_mode = GlobalSignals.ControlMode.KEYBOARD_TURN
+	_refresh_settings_state()
+
+
+func _on_back_pressed() -> void:
+	_back_to_main()

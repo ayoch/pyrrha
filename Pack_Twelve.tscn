@@ -1,0 +1,39 @@
+[gd_scene format=3]
+
+[node name="Pack_Twelve" type="Node2D"]
+
+[node name="M0" type="Marker2D" parent="."]
+position = Vector2(300, 0)
+
+[node name="M1" type="Marker2D" parent="."]
+position = Vector2(260, 150)
+
+[node name="M2" type="Marker2D" parent="."]
+position = Vector2(150, 260)
+
+[node name="M3" type="Marker2D" parent="."]
+position = Vector2(0, 300)
+
+[node name="M4" type="Marker2D" parent="."]
+position = Vector2(-150, 260)
+
+[node name="M5" type="Marker2D" parent="."]
+position = Vector2(-260, 150)
+
+[node name="M6" type="Marker2D" parent="."]
+position = Vector2(-300, 0)
+
+[node name="M7" type="Marker2D" parent="."]
+position = Vector2(-260, -150)
+
+[node name="M8" type="Marker2D" parent="."]
+position = Vector2(-150, -260)
+
+[node name="M9" type="Marker2D" parent="."]
+position = Vector2(0, -300)
+
+[node name="M10" type="Marker2D" parent="."]
+position = Vector2(150, -260)
+
+[node name="M11" type="Marker2D" parent="."]
+position = Vector2(260, -150)

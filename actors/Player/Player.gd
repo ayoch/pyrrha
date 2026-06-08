@@ -1,470 +1,540 @@
 extends CharacterBody2D
 class_name Player
 
-@onready var collision_placeholder = $Collision_Placeholder
-var type = "player"
-#@onready var heard_something = preload("res://HearSomething.tscn")
-#signal player_health_changed(new_health)
-#signal player_energy_changed(new_energy)
-
-#signal made_noise()
 signal died
 
-var frequency_counter = 0
+# --- Movement ---
+# Main thrusters are deliberately much stronger than retro / side thrusters.
+# Big course changes mean turning the ship around (which costs time at turn_rate)
+# and burning forward; the weaker reverse/strafe lets you fine-tune your vector
+# without giving up your facing, at the price of much slower acceleration.
+@export var turn_rate: float = 2.0           # radians/sec; ship turns toward mouse at this max rate
+@export var thrust_forward: float = 1500.0   # accel units/sec^2 (main engines)
+@export var thrust_reverse: float = 200.0    # retros: ~1/7 main
+@export var thrust_strafe: float = 200.0     # side thrusters: ~1/7 main
+# No max speed cap — going fast is a risk/reward tradeoff (collisions hurt more).
 
-#For new movement system.
-var player_rotation
-@export var base_acceleration_forward: int = 10
-@export var base_acceleration_back: int = 2
-@export var base_acceleration_left: int = 3
-@export var base_acceleration_right: int = 3
-var current_velocity
-var movement_direction := Vector2.ZERO
-var temp_movement_direction = Vector2.ZERO
+# --- Stop mode ---
+@export var stop_facing_tolerance: float = 0.1
+@export var stop_speed_threshold: float = 5.0
 
-#New variables.
-@onready var left_ray = $Left_Laser_Ray_Cast
-@onready var right_ray = $Right_Laser_Ray_Cast
+# --- Mining laser ---
+@export var mining_cone_degrees: float = 200.0
+@export var mining_damage_per_tick: int = 10
+# Energy: any active draw stops regeneration. Both rates are per-second.
+@export var mining_energy_drain_per_sec: float = 120.0
+@export var thrust_energy_drain_per_sec: float = 20.0
+@export var energy_regen_per_sec: float = 80.0
 
-#Old variables.
-@export var speed: int = 350
-@export var base_speed: int = 350
-@export var base_energy_regen_rate: int = 1
-@export var energy_loss_rate: int = 2
-@export var height_layer: int = 2
+# --- Shield ---
+@export var max_shield: int = 100
+@export var shield_regen_per_sec: float = 15.0
+@export var shield_damage_per_impact_speed: float = 0.1  # shield damage = relative_speed * this
+@export var ripple_pool_size: int = 8
 
-#Old variables.
-#var height_layer: int = 2
+# --- Collision response ---
+# Physics model: kinetic energy ~ v², so damage does too. Bounces only happen
+# at gentle taps; above the soft-bounce threshold the ship plows through, the
+# asteroid is pulverized, and the ship eats dmg = (closing_speed / scale)².
+# Reference points at the defaults (scale=100, max_h+sh = 200):
+#   500 m/s  → 25 dmg (chip)
+#   1000 m/s → 100 dmg (depletes shield)
+#   1500 m/s → 225 dmg (lethal from full)
+#   2000 m/s → 400 dmg (annihilation)
+@export var soft_bounce_speed: float = 50.0
+@export var hull_damage_scale: float = 100.0
+# Asteroids with mass below this don't slow you down on impact — you plow
+# through them. (WHOLE=1.0, LARGE=0.45, MEDIUM=0.22, SMALL=0.07)
+@export var plow_through_mass_threshold: float = 0.3
+
+# --- Camera zoom ---
+@export var zoom_step: float = 0.01
+@export var zoom_min: float = 0.1
+@export var zoom_max: float = 100.0
+
+var type := "player"
 var health: int = 100
 var max_health: int = 100
-var player_direction_degrees: int = 0
-var last_animation = "idle_left"
-var energy:int = 100
-var max_energy:int = 100
-var noise_timer: int = 0
+var energy: int = 100
+var max_energy: int = 100
+var shield: int = 100
+var _energy_accum: float = 0.0
+var _shield_accum: float = 0.0
+var frequency_counter := 0
 
-@onready var player_hearing 
-@onready var player_camera 
-#onready var animation_player = $Sprite/AnimationPlayer
-#onready var light = $SightZoneLight
-@onready var laser_eyes_left: Line2D = $LaserEyesLeft
-@onready var laser_eyes_right: Line2D = $LaserEyesRight
+@onready var sprite: Sprite2D = $Sprite2D
+@onready var mining_beam_left: Line2D = $MiningBeamLeft
+@onready var mining_beam_right: Line2D = $MiningBeamRight
+@onready var mining_ray_left: RayCast2D = $MiningRayLeft
+@onready var mining_ray_right: RayCast2D = $MiningRayRight
 @onready var prograde_indicator = $Prograde_Indicator
 @onready var retrograde_indicator = $Retrograde_Indicator
 @onready var thrust_indicator = $Thrust_Indicator
 @onready var planet_indicator = $Planet_Indicator
-var earth_location: Vector2 
+@onready var thruster_flame: AnimatedSprite2D = $ThrusterFlame
+# Rear-mounted main forward thrusters (fire on W or rotation).
+@onready var fwd_flame_left: AnimatedSprite2D = $ForwardThrusterFlameLeft
+@onready var fwd_flame_right: AnimatedSprite2D = $ForwardThrusterFlameRight
+# Front-mounted retros (fire on S or rotation).
+@onready var retro_flame_left: AnimatedSprite2D = $RetroThrusterFlameLeft
+@onready var retro_flame_right: AnimatedSprite2D = $RetroThrusterFlameRight
+# Side-mounted thrusters (fire on strafe).
+@onready var thruster_flame_left: AnimatedSprite2D = $ThrusterFlameLeft
+@onready var thruster_flame_left2: AnimatedSprite2D = $ThrusterFlameLeft2
+@onready var thruster_flame_right: AnimatedSprite2D = $ThrusterFlameRight
+@onready var thruster_flame_right2: AnimatedSprite2D = $ThrusterFlameRight2
 
-var nav_is_pressed = false
+# Within this many radians of the target heading, no rotation-thrusters fire.
+const TURN_TOLERANCE := 0.05
+@onready var shield_hull: CollisionShape2D = $ShieldHull
+@onready var hull_box: CollisionPolygon2D = $CollisionBox
+@onready var ripple_root: Node2D = $RippleRoot
+@onready var player_camera: Camera2D = get_node("/root/Main/PlayerCamera")
+
+var _ripple_free: Array = []
+var _ripple_scene: PackedScene = preload("res://actors/Player/ShieldRipple.tscn")
+var _shock_free: Array = []
+var _shock_scene: PackedScene = preload("res://actors/Player/ShockBurst.tscn")
+@export var shock_pool_size: int = 24
+@export var laser_spark_chance: float = 0.25
+
+var earth_location := Vector2.ZERO  # updated each frame from the Earth node if it exists
+
 
 func _ready() -> void:
-	earth_location.x = 0
-	earth_location.y = 1
-
-
-#	player_hearing = get_node("/root/Main/PlayerHearing")
-#	weapon_manager.initialize(team.team)
-	player_camera = get_node("/root/Main/PlayerCamera")
-	laser_eyes_left.visible = false
-	laser_eyes_right.visible = false
-	
-	
-	GlobalSignals.connect("made_noise", Callable(self, "handle_noise_heard"))
+	mining_beam_left.visible = false
+	mining_beam_right.visible = false
+	thruster_flame.visible = false
+	# Collision layers: player on layer 1; collides with whole asteroids (2) and
+	# fragments (3). Mining rays look for whole+fragment (mask 6).
+	collision_layer = 1
+	collision_mask = 6
+	mining_ray_left.collision_mask = 6
+	mining_ray_right.collision_mask = 6
+	for i in ripple_pool_size:
+		var r: Node2D = _ripple_scene.instantiate()
+		ripple_root.add_child(r)
+		_ripple_free.push_back(r)
+	for i in shock_pool_size:
+		var s: Node2D = _shock_scene.instantiate()
+		ripple_root.add_child(s)   # shares the top-level root with ripples
+		_shock_free.push_back(s)
+	_update_collision_shapes()
 	GlobalSignals.emit_signal("player_exists")
 
 
-func handle_noise_heard(intensity: int, position: Vector2, type, height: int):
-	pass
-	#if position != self.global_position:
-		#var hear_something = heard_something.instantiate()
-##		hear_something.set_visibility(false)
-		#hear_something.global_position = position
-		#player_hearing.add_child(hear_something)
+# Shield circle is the physical collision while shield is up; ship hull takes
+# over when shield is depleted. Deferred to avoid mutating during physics step.
+func _update_collision_shapes() -> void:
+	var shield_up: bool = shield > 0
+	shield_hull.set_deferred("disabled", not shield_up)
+	hull_box.set_deferred("disabled", shield_up)
 
 
 func _physics_process(delta: float) -> void:
-	frequency_counter += 1
-	if frequency_counter == 30:
-		GlobalSignals.emit_signal("broadcast_player_position", self.global_position)
-	if frequency_counter == 60:
-		frequency_counter = 0
-	nav_is_pressed = false #For toggling nav indicators.
-#	Set retrograde and prograde indicators to their correct positions
-	var mouse_angle = get_angle_to(get_global_mouse_position())
-#	print(mouse_angle)
-	look_at(get_global_mouse_position())
-	energy = 100
-#	set_camera_transform()
-	
-#	fog_of_war.visible = true
-	player_camera.global_position.x = global_position.x
-	player_camera.global_position.y = global_position.y
-	laser_eyes_left.clear_points()
-	laser_eyes_right.clear_points()
-#	update_energy()
-#	print("Player energy is: ", self.energy)
-#	GlobalSignals.emit_signal("player_energy_changed", self.energy)
-#	if energy == 100:
-#		emit_signal("player_energy_changed", energy)
-#		print("Player energy is at 100.")
-#	emit_signal("player_energy_changed", energy)
-#	print("in physics energy is: ", energy)
-	
-#	var movement_direction := Vector2.ZERO
-#	rotate_head(get_global_mouse_position())
-#	light.look_at(get_global_mouse_position())
-#	weapon_manager.look_at(get_global_mouse_position())
-	
-	if Input.is_action_pressed("shoot"):
-		laser_eyes()
-	
-#	if Input.is_action_pressed("speed") and no_movement_input() == false:
-#		speed = base_speed
-#		energy = clamp(energy -2, 0, max_energy)
-##		update_energy()
-##		GlobalSignals.emit_signal("player_energy_changed", energy)
-#		make_noise(8)
-#		if energy > 0:
-#			speed = base_speed * 2
-#	else:
-#		speed = 350
-	player_rotation = self.global_rotation
-	if Input.is_action_pressed("forward"):
-		movement_direction += Vector2.RIGHT.rotated(player_rotation) * base_acceleration_forward
-		
-	if Input.is_action_pressed("back"):
-		temp_movement_direction = Vector2.ZERO
-		temp_movement_direction += Vector2.RIGHT.rotated(player_rotation) * base_acceleration_back
-		var x = temp_movement_direction.x
-		var y = temp_movement_direction.y
-		temp_movement_direction.x = x * -1
-		temp_movement_direction.y = y * -1
-		movement_direction += temp_movement_direction
-		
-	if Input.is_action_pressed("left"):
-		temp_movement_direction = Vector2.ZERO
-		temp_movement_direction += Vector2.RIGHT.rotated(player_rotation) * base_acceleration_left
-		var x = temp_movement_direction.x
-		var y = temp_movement_direction.y
-		temp_movement_direction.x = y
-		temp_movement_direction.y = -1 * x
-		movement_direction += temp_movement_direction
-		
-	if Input.is_action_pressed("right"):
-		temp_movement_direction = Vector2.ZERO
-		temp_movement_direction += Vector2.RIGHT.rotated(player_rotation) * base_acceleration_right
-		var x = temp_movement_direction.x
-		var y = temp_movement_direction.y
-		temp_movement_direction.x = y * -1
-		temp_movement_direction.y = x
-		movement_direction += temp_movement_direction
-	
-	if Input.is_action_pressed("back") and Input.is_action_pressed("shift"):
-		temp_movement_direction = Vector2.ZERO
-		
-	if Input.is_action_pressed("zoom in"):
-#		print("trying to change camera zoom out")
-		player_camera.zoom.x += .01
-		player_camera.zoom.y += .01
-	if Input.is_action_pressed("zoom out"):
-#		print("trying to change camera zoom in")
-		player_camera.zoom.x = clamp(player_camera.zoom.x -.01, 0.1, 100)
-		player_camera.zoom.y = clamp(player_camera.zoom.y -.01, 0.1, 100)
-#		if (player_camera.zoom.x -.1) != 0:
-#			player_camera.zoom.x -= .1
-#			player_camera.zoom.y -= .1
-
-	if Input.is_action_just_pressed("Nav"):
-		print("Nav was pressed.")
-		
-		if planet_indicator.visible == true and thrust_indicator.visible == true:
-				print("Turning both navs off.")
-				planet_indicator.visible = false
-				thrust_indicator.visible = false
-		elif planet_indicator.visible == false and thrust_indicator.visible == false:
-			print("Turning on thrust indicator.")
-			thrust_indicator.visible = true
-		elif thrust_indicator.visible == true and planet_indicator.visible == false:
-			print("Turninf off thrust indicator and turning on planet indicator.")
-			thrust_indicator.visible = false
-			planet_indicator.visible = true
-		elif planet_indicator.visible == true and thrust_indicator.visible == false:
-			print("Turning on thrust indicator because it's off and planet indicator is on.")
-			thrust_indicator.visible = true	
-		
-	
-	if (movement_direction.y != 0.0) and (movement_direction.x != 0.0):
-		thrust_indicator.rotation = movement_direction.angle() - self.rotation
-		thrust_indicator.rotation += PI/2
-		var p = self.position.angle_to(earth_location)
-		p += self.rotation
-		p += PI/2
-	
-		planet_indicator.position.x = self.position.x + cos(p) * 160
-		planet_indicator.position.y = self.position.y + sin(p) * 160
-#		planet_indicator.position.x -= self.position.x
-#		planet_indicator.position.y -= self.position.y
-		planet_indicator.position -= self.position
-		planet_indicator.position.y = planet_indicator.position.y * -1
+	if Input.is_action_pressed("stop"):
+		_all_thrusters_off()
+		_handle_stop_mode(delta)
 	else:
-		prograde_indicator.rotation = 0
-		retrograde_indicator.rotation = 0
-	planet_indicator.rotation -= self.rotation
-#	X := originX + cos(angle)*radius;
-#	Y := originY + sin(angle)*radius;
+		_handle_turning(delta)
+		_handle_thrust(delta)
+	_handle_mining_laser(delta)
+	_handle_energy(delta)
+	_regenerate_shield(delta)
+	_handle_zoom()
+	_handle_nav_cycle()
+	_update_indicators()
+	_update_collision_shapes()
 
-	set_velocity(movement_direction)
+	var pre_move_vel := velocity
 	move_and_slide()
-	GlobalSignals.emit_signal("update_speed", movement_direction.length())
+	_resolve_slide_collisions(pre_move_vel)
+
+	player_camera.global_position = global_position
+	GlobalSignals.emit_signal("update_speed", velocity.length())
+
+	frequency_counter += 1
+	if frequency_counter % 30 == 0:
+		GlobalSignals.emit_signal("broadcast_player_position", global_position)
+	if frequency_counter >= 60:
+		frequency_counter = 0
 
 
-func set_directional_animations(direction):
-#	print("Player direction index is in radians: ", player_direction_degrees)
-	player_direction_degrees = rad_to_deg(direction.angle())
-	
-	if player_direction_degrees < 0:
-		player_direction_degrees += 360
-		
-#	if player_direction_degrees == 179:
-#		player_direction_degrees = 180
-#		print(player_direction_degrees)
-		
-#	print("Player direction index is: ", player_direction_degrees)
-#	print("last animation was: ", last_animation)
-#	if player_direction_degrees == 0 and no_movement_input() == true:
-#	if no_movement_input() == true:
-##		animation_player.play(last_animation)
-##		print("Player is not moving.")
-#		pass
-#	else:
-#		make_noise(1)
-##		print("Player is moving.")
-#		if player_direction_degrees >= 0 and player_direction_degrees <=45:
-##			print("player angle in degrees is: ", player_direction_degrees)
-##			animation_player.play("idle_right")
-##			last_animation = "idle_right"
-#
-#			laser_eyes_left.position.x = 17.5
-#			laser_eyes_left.position.y = -8
-#
-#			laser_eyes_right.position.x = 17.5
-#			laser_eyes_right.position.y = -6
-#
-#		if player_direction_degrees / 45 == 1:
-##			print("player angle in degrees is: ", player_direction_degrees)
-##			animation_player.play("idle_right_down")
-##			last_animation = "idle_right_down"
-#
-#			laser_eyes_left.position.x = 12.5
-#			laser_eyes_left.position.y = -1
-#
-#			laser_eyes_right.position.x = 9.85
-#			laser_eyes_right.position.y = -0.09
-#
-#		if player_direction_degrees / 45 == 2:
-##			print("player angle in degrees is: ", player_direction_degrees)
-##			animation_player.play("idle_down")
-##			last_animation = "idle_down"
-#
-#			laser_eyes_left.position.x = 1
-#			laser_eyes_left.position.y = 7.5
-#
-#			laser_eyes_right.position.x = -2.1
-#			laser_eyes_right.position.y = 7.5
-#
-#		if player_direction_degrees / 45 == 3:
-##			print("player angle in degrees is: ", player_direction_degrees)
-##			animation_player.play("idle_left_down")
-##			last_animation = "idle_left_down"
-#
-#			laser_eyes_left.position.x = -10.7
-#			laser_eyes_left.position.y = -1
-#
-#			laser_eyes_right.position.x = -13.25
-#			laser_eyes_right.position.y = -1.5
-#
-#		if player_direction_degrees / 45 == 4:
-##			print("player angle in degrees is: ", player_direction_degrees)
-##			animation_player.play("idle_left")
-##			last_animation = "idle_left"
-#
-#			laser_eyes_left.position.x = -17
-#			laser_eyes_left.position.y = -6
-#
-#			laser_eyes_right.position.x = -17
-#			laser_eyes_right.position.y = -8
-#
-#		if player_direction_degrees / 45 == 5:
-##			print("player angle in degrees is: ", player_direction_degrees)
-##			animation_player.play("idle_left_up")
-##			last_animation = "idle_left_up"
-#
-#			laser_eyes_left.position.x = -12
-#			laser_eyes_left.position.y = -11.5
-#
-#			laser_eyes_right.position.x = -10
-#			laser_eyes_right.position.y = -13.5
-#
-#		if player_direction_degrees / 45 == 6:
-##			print("player angle in degrees is: ", player_direction_degrees)
-##			animation_player.play("idle_up")
-##			last_animation = "idle_up"
-#
-#			laser_eyes_left.position.x = -2
-#			laser_eyes_left.position.y = -15.5
-#
-#			laser_eyes_right.position.x = 1
-#			laser_eyes_right.position.y = -15.5
-#
-#		if player_direction_degrees / 45 == 7:
-##			print("player angle in degrees is: ", player_direction_degrees)
-##			animation_player.play("idle_right_up")
-##			last_animation = "idle_right_up"
-#
-#			laser_eyes_left.position.x = 9.5
-#			laser_eyes_left.position.y = -14
-#
-#			laser_eyes_right.position.x = 12
-#			laser_eyes_right.position.y = -12
+# ----------------------------------------------------------------------
+# Movement
+# ----------------------------------------------------------------------
 
-#	last_direction_index = player_direction_degrees / 45
-#	set_directional_animations(player_direction_degrees)
+func _handle_turning(delta: float) -> void:
+	if GlobalSignals.control_mode == GlobalSignals.ControlMode.MOUSE_TURN:
+		var angle_to_mouse: float = get_angle_to(get_global_mouse_position())
+		var step: float = turn_rate * delta
+		if abs(angle_to_mouse) <= step:
+			rotation += angle_to_mouse
+		else:
+			rotation += sign(angle_to_mouse) * step
+	else:
+		# KEYBOARD_TURN: A/D rotate the ship at the same fixed rate.
+		if Input.is_action_pressed("left"):
+			rotation -= turn_rate * delta
+		if Input.is_action_pressed("right"):
+			rotation += turn_rate * delta
 
 
-func make_noise(intensity: int):
-	noise_timer += 1
-	if noise_timer == 10:
-		GlobalSignals.emit_signal("made_noise", intensity, self.global_position, "cat", height_layer)
-		noise_timer = 0
+func _handle_thrust(delta: float) -> void:
+	var forward := Vector2.RIGHT.rotated(rotation)
+	var thrusting_forward := Input.is_action_pressed("forward")
+	var thrusting_back := Input.is_action_pressed("back")
+	if thrusting_forward:
+		velocity += forward * thrust_forward * delta
+	if thrusting_back:
+		velocity -= forward * thrust_reverse * delta
+
+	var strafe_left := false
+	var strafe_right := false
+	if GlobalSignals.control_mode == GlobalSignals.ControlMode.MOUSE_TURN:
+		# A/D strafe (turning is done by the mouse).
+		var ship_right := -forward.orthogonal()
+		strafe_right = Input.is_action_pressed("right")
+		strafe_left = Input.is_action_pressed("left")
+		if strafe_right:
+			velocity += ship_right * thrust_strafe * delta
+		if strafe_left:
+			velocity -= ship_right * thrust_strafe * delta
+	# In KEYBOARD_TURN mode, A/D rotate (handled in _handle_turning); no strafe.
+
+	_update_thrusters(thrusting_forward, thrusting_back, strafe_left, strafe_right)
 
 
-# I know this looks like a gibbon wrote it. I'm too tired to fix. It works.
-func laser_eyes() -> void:
-#	make_noise(8)
-#	GlobalSignals.emit_signal("made_noise", self.global_position)
-	if energy > 0:
-		if energy == 1:
-#			print("before energy adjustment energy is (should be 1): ", energy)
-			energy = clamp(energy -1, 0, 100)
+# Per-thruster firing rules (OR-combined across inputs):
+#   W   -> ForwardThrusterFlameLeft + ForwardThrusterFlameRight
+#   S   -> RetroThrusterFlameLeft + RetroThrusterFlameRight
+#   A   -> ThrusterFlameRight + ThrusterFlameRight2   (right-side flames push ship left)
+#   D   -> ThrusterFlameLeft  + ThrusterFlameLeft2    (left-side flames push ship right)
+#   Turn CW  -> ForwardThrusterFlameLeft + RetroThrusterFlameRight (rotation couple)
+#   Turn CCW -> ForwardThrusterFlameRight + RetroThrusterFlameLeft
+func _update_thrusters(fwd: bool, back: bool, sleft: bool, sright: bool) -> void:
+	var turn_cw: bool = false
+	var turn_ccw: bool = false
+	if GlobalSignals.control_mode == GlobalSignals.ControlMode.MOUSE_TURN:
+		var angle: float = get_angle_to(get_global_mouse_position())
+		turn_cw = angle > TURN_TOLERANCE
+		turn_ccw = angle < -TURN_TOLERANCE
+	else:
+		# KEYBOARD_TURN: A/D directly indicate rotation intent.
+		turn_cw = Input.is_action_pressed("right")
+		turn_ccw = Input.is_action_pressed("left")
+	_set_flame(fwd_flame_left,        fwd or turn_cw)
+	_set_flame(fwd_flame_right,       fwd or turn_ccw)
+	_set_flame(retro_flame_left,      back or turn_ccw)
+	_set_flame(retro_flame_right,     back or turn_cw)
+	_set_flame(thruster_flame_left,   sright)
+	_set_flame(thruster_flame_left2,  sright)
+	_set_flame(thruster_flame_right,  sleft)
+	_set_flame(thruster_flame_right2, sleft)
+
+
+# Toggle visibility + animation playback + per-frame brightness flicker.
+func _set_flame(node: AnimatedSprite2D, on: bool) -> void:
+	if on:
+		node.visible = true
+		if not node.is_playing():
+			node.play("burn")
+		var b: float = randf_range(0.75, 1.0)
+		node.modulate = Color(b, b, b, 1.0)
+	else:
+		if node.is_playing():
+			node.stop()
+		node.visible = false
+
+
+func _all_thrusters_off() -> void:
+	_set_flame(fwd_flame_left,        false)
+	_set_flame(fwd_flame_right,       false)
+	_set_flame(retro_flame_left,      false)
+	_set_flame(retro_flame_right,     false)
+	_set_flame(thruster_flame_left,   false)
+	_set_flame(thruster_flame_left2,  false)
+	_set_flame(thruster_flame_right,  false)
+	_set_flame(thruster_flame_right2, false)
+
+
+func _handle_stop_mode(delta: float) -> void:
+	var speed := velocity.length()
+	if speed <= stop_speed_threshold:
+		velocity = Vector2.ZERO
+		return
+	# Two ways to brake:
+	#   A) face prograde, burn retros (weak; no spin if already pointed there)
+	#   B) face retrograde, burn mains (strong; costs a spin)
+	# Pick whichever total time is shorter: rotation_time + burn_time.
+	var vel_angle: float = velocity.angle()
+	var prograde_angle: float = vel_angle
+	var retrograde_angle: float = wrapf(vel_angle + PI, -PI, PI)
+	var rot_to_pro: float = abs(wrapf(prograde_angle - rotation, -PI, PI))
+	var rot_to_retro: float = abs(wrapf(retrograde_angle - rotation, -PI, PI))
+	var t_retros: float = rot_to_pro / turn_rate + speed / thrust_reverse
+	var t_mains: float = rot_to_retro / turn_rate + speed / thrust_forward
+	var use_mains: bool = t_mains < t_retros
+	var target_angle: float = retrograde_angle if use_mains else prograde_angle
+	var thrust_force: float = thrust_forward if use_mains else thrust_reverse
+
+	# Rotate toward chosen target.
+	var delta_angle: float = wrapf(target_angle - rotation, -PI, PI)
+	var step: float = turn_rate * delta
+	if abs(delta_angle) <= step:
+		rotation = target_angle
+	else:
+		rotation += sign(delta_angle) * step
+	var burning: bool = abs(delta_angle) <= stop_facing_tolerance
+	if burning:
+		# Net braking force is always anti-velocity; which thruster set we fire
+		# determines magnitude and visual.
+		var burn: Vector2 = -velocity.normalized() * thrust_force * delta
+		if burn.length() >= speed:
+			velocity = Vector2.ZERO
+		else:
+			velocity += burn
+
+	# Light the active thruster set.
+	_set_flame(fwd_flame_left,    use_mains and burning)
+	_set_flame(fwd_flame_right,   use_mains and burning)
+	_set_flame(retro_flame_left,  (not use_mains) and burning)
+	_set_flame(retro_flame_right, (not use_mains) and burning)
+
+
+# ----------------------------------------------------------------------
+# Mining laser
+# ----------------------------------------------------------------------
+
+func _handle_mining_laser(_delta: float) -> void:
+	mining_beam_left.clear_points()
+	mining_beam_right.clear_points()
+	mining_beam_left.visible = false
+	mining_beam_right.visible = false
+	if energy <= 0 or not Input.is_action_pressed("shoot"):
+		return
+	var half_cone: float = deg_to_rad(mining_cone_degrees * 0.5)
+	if abs(get_angle_to(get_global_mouse_position())) > half_cone:
+		return
+	_fire_beam(mining_beam_left, mining_ray_left)
+	_fire_beam(mining_beam_right, mining_ray_right)
+
+
+# Unified energy budget. Any active drain stops regen for that frame; idle
+# frames refill. Mining drains heavily, thrust drains modestly.
+func _handle_energy(delta: float) -> void:
+	var laser_firing: bool = energy > 0 and Input.is_action_pressed("shoot") \
+		and abs(get_angle_to(get_global_mouse_position())) <= deg_to_rad(mining_cone_degrees * 0.5)
+	var thrusting: bool = (
+		Input.is_action_pressed("forward")
+		or Input.is_action_pressed("back")
+		or Input.is_action_pressed("left")
+		or Input.is_action_pressed("right")
+		or Input.is_action_pressed("stop")
+	)
+	var rate: float = 0.0
+	if laser_firing:
+		rate -= mining_energy_drain_per_sec
+	if thrusting:
+		rate -= thrust_energy_drain_per_sec
+	if rate == 0.0 and energy < max_energy:
+		rate = energy_regen_per_sec
+	if rate == 0.0:
+		return
+	_energy_accum += rate * delta
+	var whole: int = int(_energy_accum)
+	if whole != 0:
+		var prev: int = energy
+		energy = clamp(energy + whole, 0, max_energy)
+		_energy_accum -= whole
+		if energy != prev:
 			GlobalSignals.emit_signal("player_energy_changed", energy)
-#			print("after energy adjustment energy is (should be 0): ", energy)
-			return
-		elif energy == 2:
-#			print("before energy adjustment energy is (should be 2): ", energy)
-			energy = clamp(energy -2, 0, 100)
-			GlobalSignals.emit_signal("player_energy_changed", energy)
-#			print("after energy adjustment energy is (should be 1): ", energy)
-			return
-			
-		energy = clamp(energy -2, 0, 100)
-		GlobalSignals.emit_signal("player_energy_changed", energy)
-#		print("after energy adjustment energy is (should be above 2 here): ", energy)
-	
-		laser_eyes_left.clear_points()
-		laser_eyes_right.clear_points()
-		
-		laser_eyes_left.add_point(Vector2.ZERO)
-		laser_eyes_right.add_point(Vector2.ZERO)
-		
-		laser_eyes_left.add_point(laser_eyes_left.get_local_mouse_position())
-		laser_eyes_right.add_point(laser_eyes_right.get_local_mouse_position())
-		
-		left_ray.target_position = left_ray.get_local_mouse_position() 
-		right_ray.target_position = right_ray.get_local_mouse_position() 
-		
-		left_ray.position = laser_eyes_left.position
-		right_ray.position = laser_eyes_right.position
-#		left_laser.to_local(left_ray.get_collision_point())
-		
-		if left_ray.is_colliding() == true:
-#			If the player hits an asteroid, a signal goes to the asteroid so it can update
-#			its integrity.
-			if left_ray.get_collider().type == "asteroid":
-				GlobalSignals.emit_signal("player_hit_asteroid", left_ray.get_collider().name, 10)
-			
-#			laser_eyes_left.set_point_position(1, to_local(left_ray.get_collision_point()))
-			laser_eyes_left.set_point_position(1, laser_eyes_left.to_local(left_ray.get_collision_point()))
-			
-		if right_ray.is_colliding() == true:
-#			collision_placeholder.visible = true
-#			collision_placeholder.position = laser_eyes_right.get_point_position(1)
-#			print("Right ray is hitting ", right_ray.get_collider().name)
-#			laser_eyes_right.set_point_position(1, to_local(right_ray.get_collision_point()))
-#			collision_placeholder.position = laser_eyes_right.get_point_position(1)
-			laser_eyes_right.set_point_position(1, laser_eyes_right.to_local(right_ray.get_collision_point()))
-#			
-#		if right_ray.is_colliding() == true:
-##			print("Right ray is hitting ", right_ray.get_collider().name)
-#			laser_eyes_right.set_point_position(1, right_ray.get_collision_point())
-			
-#			print("Player is at: ", self.position)
-#			print("Right ray is ending at: ", right_ray.get_collision_point())
-#			print("Right laser is: ", laser_eyes_right.points)
-##			print("Right ray length: ", right_ray.)
-		
-#		print("Left eye has ", laser_eyes_left.points, " points.")
-#		print("Right eye has ", laser_eyes_right.points, " points.")
-	
-		laser_eyes_left.visible = true
-		laser_eyes_right.visible = true
 
 
-#func set_camera_transform(camera_path: Transform2D):
-#	camera_transform.remote_path = camera_path
-##	player_camera.x = global_position.x
-##	player_camera.y = global_position.y
+func _fire_beam(beam: Line2D, ray: RayCast2D) -> void:
+	beam.add_point(Vector2.ZERO)
+	beam.add_point(beam.get_local_mouse_position())
+	ray.target_position = ray.get_local_mouse_position()
+	ray.force_raycast_update()
+	if ray.is_colliding():
+		var collider = ray.get_collider()
+		var hit_point: Vector2 = ray.get_collision_point()
+		if collider and "type" in collider and collider.type == "asteroid":
+			GlobalSignals.emit_signal("player_hit_asteroid", collider.name, mining_damage_per_tick)
+			# Occasional spark at the hit point so mining looks like cutting, not a static beam.
+			if randf() < laser_spark_chance:
+				_spawn_shock(hit_point)
+		beam.set_point_position(1, beam.to_local(hit_point))
+	beam.visible = true
 
 
-func set_energy(new_energy: int):
-	pass
+# ----------------------------------------------------------------------
+# Shield + impact
+# ----------------------------------------------------------------------
 
-func update_energy() -> void:
-	pass
-#	energy = clamp(energy + change, 0, max_energy)
-#	if no_movement_input() == true:
-#		energy = clamp(energy + (base_energy_regen_rate * 2), 0, max_energy)
-##		print("Gaining energy at double the normal rate.")
-#		if energy == 99:
-#			energy = 100
-#	elif no_movement_input() == false:
-#		energy = clamp(energy + base_energy_regen_rate, 0, 100)
-##		print("Gaining energy at normal rate.")
-#	GlobalSignals.emit_signal("player_energy_changed", energy)
+func _regenerate_shield(delta: float) -> void:
+	if shield >= max_shield:
+		return
+	_shield_accum += shield_regen_per_sec * delta
+	var whole: int = int(_shield_accum)
+	if whole > 0:
+		shield = clamp(shield + whole, 0, max_shield)
+		_shield_accum -= whole
+		GlobalSignals.emit_signal("player_shield_changed", shield)
 
 
-#func no_movement_input() -> bool:
-#	if not Input.is_action_pressed("up") and not Input.is_action_pressed("down") and not Input.is_action_pressed("left") and not Input.is_action_pressed("right"):
-#		return true
-#	else:
-#		return false
+func _apply_shield_hit(rel_speed: float, at_pos: Vector2, normal: Vector2) -> void:
+	var dmg: int = max(1, int(rel_speed * shield_damage_per_impact_speed))
+	shield = clamp(shield - dmg, 0, max_shield)
+	_shield_accum = 0.0
+	GlobalSignals.emit_signal("player_shield_changed", shield)
+	_spawn_ripple(at_pos, normal)
 
 
-func rotate_head(location: Vector2):
-#	light.rotation = lerp_angle(rotation, global_position.direction_to(location).angle(), 0.1)
-#	light.look_at(get_global_mouse_position())
-	pass
+func _spawn_ripple(at_pos: Vector2, normal: Vector2) -> void:
+	if _ripple_free.is_empty():
+		return
+	var r = _ripple_free.pop_back()
+	r.emit(at_pos, normal, Callable(self, "_return_ripple"))
 
 
-func handle_hit():
-	health -= 20
-	GlobalSignals.emit_signal("player_health_changed", health)
-	if health <= 0:
-		die()
+func _return_ripple(r) -> void:
+	_ripple_free.push_back(r)
 
 
-func die():
-	emit_signal("died")
+func _spawn_shock(at_pos: Vector2) -> void:
+	if _shock_free.is_empty():
+		return
+	var s = _shock_free.pop_back()
+	s.emit(at_pos, Callable(self, "_return_shock"))
+
+
+func _return_shock(s) -> void:
+	_shock_free.push_back(s)
+
+
+# ----------------------------------------------------------------------
+# Slide collision resolution (ship vs asteroid bodies)
+# ----------------------------------------------------------------------
+
+func _resolve_slide_collisions(pre_move_vel: Vector2) -> void:
+	# Tally impact mass to decide how much of the velocity move_and_slide
+	# cancelled should be restored (because the cancellation came from massless
+	# fragments we should plow through).
+	var total_impact_mass: float = 0.0
+	var plow_impact_mass: float = 0.0
+
+	for i in get_slide_collision_count():
+		var c := get_slide_collision(i)
+		var other := c.get_collider()
+		if other == null or not ("type" in other) or other.type != "asteroid":
+			continue
+		var normal: Vector2 = c.get_normal()
+		var contact: Vector2 = c.get_position()
+		var rel_vel: Vector2 = pre_move_vel - other.asteroid_velocity
+		var closing: float = abs(rel_vel.dot(normal))
+		var impactor_mass: float = float(other.mass) if "mass" in other else 1.0
+
+		# Gentle bump: bounce, zero damage, asteroid survives. Doesn't count
+		# toward plow-through tallying (we deliberately bounced).
+		if closing < soft_bounce_speed:
+			velocity = velocity.bounce(normal)
+			other.asteroid_velocity = other.asteroid_velocity.bounce(-normal)
+			if shield > 0:
+				_spawn_ripple(contact, normal)
+			continue
+
+		# Shock burst at the contact point — quick visual cue that something hit you.
+		_spawn_shock(contact)
+
+		# Kinetic damage scaled by impactor mass. Shield absorbs first, overflow
+		# eats hull. Asteroid is pulverized regardless.
+		var raw_dmg: float = pow(closing / hull_damage_scale, 2.0) * impactor_mass
+		var dmg_remaining: float = raw_dmg
+		if shield > 0:
+			var absorbed: float = min(float(shield), dmg_remaining)
+			shield = clamp(shield - int(ceil(absorbed)), 0, max_shield)
+			_shield_accum = 0.0
+			GlobalSignals.emit_signal("player_shield_changed", shield)
+			_spawn_ripple(contact, normal)
+			dmg_remaining -= absorbed
+		if dmg_remaining > 0:
+			health = clamp(health - int(ceil(dmg_remaining)), 0, max_health)
+			GlobalSignals.emit_signal("player_health_changed", health)
+			if health <= 0:
+				die()
+				return
+		# Pulverize the asteroid — any rock's integrity is dwarfed by impact KE.
+		GlobalSignals.emit_signal("player_hit_asteroid", other.name, 99999)
+
+		total_impact_mass += impactor_mass
+		if impactor_mass < plow_through_mass_threshold:
+			plow_impact_mass += impactor_mass
+
+	# Restore the share of velocity that was lost to plow-through-class hits.
+	if total_impact_mass > 0.0001:
+		var plow_fraction: float = plow_impact_mass / total_impact_mass
+		var velocity_lost: Vector2 = pre_move_vel - velocity
+		velocity += velocity_lost * plow_fraction
+
+
+# ----------------------------------------------------------------------
+# Misc UI
+# ----------------------------------------------------------------------
+
+func _handle_zoom() -> void:
+	if Input.is_action_pressed("zoom in"):
+		player_camera.zoom.x = clamp(player_camera.zoom.x + zoom_step, zoom_min, zoom_max)
+		player_camera.zoom.y = clamp(player_camera.zoom.y + zoom_step, zoom_min, zoom_max)
+	if Input.is_action_pressed("zoom out"):
+		player_camera.zoom.x = clamp(player_camera.zoom.x - zoom_step, zoom_min, zoom_max)
+		player_camera.zoom.y = clamp(player_camera.zoom.y - zoom_step, zoom_min, zoom_max)
+
+
+# 4-state cycle: off → thrust → planet → both → off
+func _handle_nav_cycle() -> void:
+	if not Input.is_action_just_pressed("Nav"):
+		return
+	var t: bool = thrust_indicator.visible
+	var p: bool = planet_indicator.visible
+	if not t and not p:
+		thrust_indicator.visible = true
+	elif t and not p:
+		thrust_indicator.visible = false
+		planet_indicator.visible = true
+	elif not t and p:
+		thrust_indicator.visible = true
+	else:
+		thrust_indicator.visible = false
+		planet_indicator.visible = false
+
+
+func _update_indicators() -> void:
+	if velocity.length_squared() > 0.0:
+		thrust_indicator.rotation = velocity.angle() - rotation + PI / 2
+	var earth = get_tree().get_first_node_in_group("earth")
+	if earth != null:
+		earth_location = earth.global_position
+	var to_earth: float = (earth_location - global_position).angle() - rotation
+	planet_indicator.position = Vector2(cos(to_earth), sin(to_earth)) * 160.0
+	planet_indicator.rotation = to_earth + PI / 2
+
+
+# ----------------------------------------------------------------------
+# Lifecycle
+# ----------------------------------------------------------------------
+
+func die() -> void:
+	died.emit()
+	GlobalSignals.emit_signal("player_died")
 	queue_free()
 
 
-func save():
-	var save_dict = {
-	"filename" : get_scene_file_path(),
-	"parent" : get_parent().get_path(),
-	"pos_x" : position.x, # Vector2 is not supported by JSON
-	"pos_y" : position.y,
-	"current_health" : health
+func save() -> Dictionary:
+	return {
+		"filename": get_scene_file_path(),
+		"parent": get_parent().get_path(),
+		"pos_x": position.x,
+		"pos_y": position.y,
+		"current_health": health,
 	}
-	
-	return save_dict
-		

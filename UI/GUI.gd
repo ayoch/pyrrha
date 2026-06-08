@@ -1,12 +1,8 @@
 extends CanvasLayer
 
-
-@onready var health_bar = $MarginContainer/Rows/BottomRow/VBoxContainer/HealthSection/HealthBar
-@onready var health_tween = $MarginContainer/Rows/BottomRow/VBoxContainer/HealthSection/HealthTween
-@onready var shield_bar = $MarginContainer/Rows/BottomRow/VBoxContainer/ShieldSection/ShieldBar
-@onready var shield_tween = $MarginContainer/Rows/BottomRow/VBoxContainer/ShieldSection/ShieldTween
-@onready var energy_bar = $MarginContainer/Rows/BottomRow/VBoxContainer/EnergySection/EnergyBar
-@onready var energy_tween = $MarginContainer/Rows/BottomRow/VBoxContainer/EnergySection/EnergyTween
+@onready var health_bar: ProgressBar = $MarginContainer/Rows/BottomRow/VBoxContainer/HealthSection/HealthBar
+@onready var shield_bar: ProgressBar = $MarginContainer/Rows/BottomRow/VBoxContainer/ShieldSection/ShieldBar
+@onready var energy_bar: ProgressBar = $MarginContainer/Rows/BottomRow/VBoxContainer/EnergySection/EnergyBar
 
 @onready var debug_display = $MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer/Debug_Display
 @onready var debug_display2 = $MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer/Debug_Display2
@@ -14,95 +10,132 @@ extends CanvasLayer
 @onready var debug_display4 = $MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer/Debug_Display4
 
 var player: Player
-
-func _ready():
-	GlobalSignals.connect("add_to_debug_display", Callable(self, "add_to_debug_display"))
-	GlobalSignals.connect("set_debug_display", Callable(self, "set_debug_display"))
-	GlobalSignals.connect("add_to_debug2_display", Callable(self, "add_to_debug2_display"))
-	GlobalSignals.connect("set_debug2_display", Callable(self, "set_debug2_display"))
-	
-	GlobalSignals.connect("broadcast_player_position", Callable(self, "on_receive_player_position"))
+var _score_label: Label
+var _status_label: Label
 
 
-func set_player(player: Player):
-	self.player = player
-
-	set_new_health_value(player.health)
-	GlobalSignals.connect("player_health_changed", Callable(self, "set_new_health_value"))
-	
-	set_new_energy_value(player.energy)
-	GlobalSignals.connect("player_energy_changed", Callable(self, "set_new_energy_value"))
-
-#	set_weapon(player.weapon_manager.get_current_weapon())
-#	player.weapon_manager.connect("weapon_changed", self, "set_weapon")
-
-
-#func set_weapon(weapon: Weapon):
-##	set_current_ammo(weapon.current_ammo)
-##	set_max_ammo(weapon.max_ammo)
-#	if not weapon.is_connected("weapon_ammo_changed", self, "set_current_ammo"):
-#		weapon.connect("weapon_ammo_changed", self, "set_current_ammo")
-
-
-func set_new_health_value(new_health: int):
-	var original_color = Color("#5c1c1c")
-	var highlight_color = Color("#ff7e7e")
-
-	var bar_style = health_bar.get("theme_override_styles/fg")
-	health_tween.interpolate_property(health_bar, "value", health_bar.value, new_health, 0.4,Tween.TRANS_LINEAR, Tween.EASE_IN)
-	health_tween.interpolate_property(bar_style, "bg_color", original_color, highlight_color, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
-	health_tween.interpolate_property(bar_style, "bg_color", highlight_color, original_color, 0.2, Tween.TRANS_LINEAR, Tween.EASE_OUT, 0.2)
-	health_tween.start()
+func _ready() -> void:
+	GlobalSignals.add_to_debug_display.connect(_on_add_to_debug)
+	GlobalSignals.set_debug_display.connect(_on_set_debug)
+	GlobalSignals.add_to_debug2_display.connect(_on_add_to_debug2)
+	GlobalSignals.set_debug2_display.connect(_on_set_debug2)
+	GlobalSignals.broadcast_player_position.connect(_on_player_position)
+	GlobalSignals.player_health_changed.connect(_set_health)
+	GlobalSignals.player_energy_changed.connect(_set_energy)
+	GlobalSignals.player_shield_changed.connect(_set_shield)
+	GlobalSignals.player_exists.connect(_bind_player)
+	GlobalSignals.total_deaths_changed.connect(_on_deaths_changed)
+	GlobalSignals.status_message.connect(_on_status_message)
+	_build_score_label()
+	_build_status_label()
+	_label_bar(health_bar, "HULL")
+	_label_bar(shield_bar, "SHIELD")
+	_label_bar(energy_bar, "ENERGY")
+	# Player may already exist if Main scene ordering put it first.
+	_bind_player()
 
 
-func set_new_shield_value(new_shield: int):
-	var original_color = Color("#588fe8")
-	var highlight_color = Color("#ff7e7e")
-
-	var bar_style = health_bar.get("theme_override_styles/fg")
-	shield_tween.interpolate_property(shield_bar, "value", health_bar.value, new_shield, 0.4,Tween.TRANS_LINEAR, Tween.EASE_IN)
-	shield_tween.interpolate_property(bar_style, "bg_color", original_color, highlight_color, 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN)
-	shield_tween.interpolate_property(bar_style, "bg_color", highlight_color, original_color, 0.2, Tween.TRANS_LINEAR, Tween.EASE_OUT, 0.2)
-	shield_tween.start()
-
-
-func set_new_energy_value(new_energy: int):
-	var original_color = Color("#b38a32")
-	var highlight_color = Color("#f27e0f")
-
-	var bar_style = energy_bar.get("theme_override_styles/fg")
-	energy_tween.interpolate_property(energy_bar, "value", energy_bar.value, new_energy, 0.2,Tween.TRANS_LINEAR, Tween.EASE_IN)
-	energy_tween.interpolate_property(bar_style, "bg_color", original_color, highlight_color, 0.1, Tween.TRANS_LINEAR, Tween.EASE_IN)
-	energy_tween.interpolate_property(bar_style, "bg_color", highlight_color, original_color, 0.1, Tween.TRANS_LINEAR, Tween.EASE_OUT, 0.1)
-	energy_tween.start()
+func _label_bar(bar: ProgressBar, label_text: String) -> void:
+	var label := Label.new()
+	label.text = label_text
+	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.95))
+	label.add_theme_constant_override("outline_size", 4)
+	label.size = Vector2(95, 30)
+	label.position = Vector2(-100, 0)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(label)
 
 
-func add_to_debug_display(message):
-	debug_display.text += message
-	
-	
-func set_debug_display(message):
-	debug_display.text = message
+func _build_score_label() -> void:
+	_score_label = Label.new()
+	_score_label.text = "0 deaths"
+	_score_label.add_theme_font_size_override("font_size", 32)
+	_score_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.45))
+	_score_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_score_label.add_theme_constant_override("outline_size", 6)
+	_score_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_score_label.position = Vector2(-150, 18)
+	_score_label.custom_minimum_size = Vector2(300, 0)
+	_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(_score_label)
 
 
-func add_to_debug2_display(message):
-	debug_display2.text += message
-	
-	
-func set_debug2_display(message):
-	debug_display2.text = message
+func _on_deaths_changed(total: int) -> void:
+	_score_label.text = "%s deaths" % _format_thousands(total)
 
 
-func on_receive_player_position(pos):
-	var x = snapped(pos.x, 0.01)
-	var y = snapped(pos.y, 0.01)
-#	print("             ", pos)
-	var text = "pos: %s, %s" % [x, y]
-	debug_display4.set_text(text)
-#	debug_display4.text = "pos: " + pos
-	
-#	var x = stepify(position.x, 0.01)
-#	var y = stepify(position.y, 0.01)
-#	var text = "player position: %s, %s" % [x, y]
-#	self.set_text(text)
+func _build_status_label() -> void:
+	_status_label = Label.new()
+	_status_label.text = ""
+	_status_label.add_theme_font_size_override("font_size", 22)
+	_status_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
+	_status_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	_status_label.add_theme_constant_override("outline_size", 5)
+	_status_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_status_label.position = Vector2(-400, -60)
+	_status_label.custom_minimum_size = Vector2(800, 0)
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(_status_label)
 
+
+func _on_status_message(text: String) -> void:
+	_status_label.text = text
+
+
+func _format_thousands(n: int) -> String:
+	var s := str(n)
+	var out := ""
+	var c := 0
+	for i in range(s.length() - 1, -1, -1):
+		out = s[i] + out
+		c += 1
+		if c % 3 == 0 and i > 0:
+			out = "," + out
+	return out
+
+
+func _bind_player() -> void:
+	if player != null:
+		return
+	var found := get_tree().get_first_node_in_group("player")
+	if found is Player:
+		player = found
+		_set_health(player.health)
+		_set_energy(player.energy)
+		_set_shield(player.shield)
+
+
+func _set_health(new_health: float) -> void:
+	health_bar.value = new_health
+
+
+func _set_energy(new_energy: float) -> void:
+	energy_bar.value = new_energy
+
+
+func _set_shield(new_shield: float) -> void:
+	shield_bar.value = new_shield
+
+
+func _on_add_to_debug(msg: String) -> void:
+	debug_display.text += msg
+
+
+func _on_set_debug(msg: String) -> void:
+	debug_display.text = msg
+
+
+func _on_add_to_debug2(msg: String) -> void:
+	debug_display2.text += msg
+
+
+func _on_set_debug2(msg: String) -> void:
+	debug_display2.text = msg
+
+
+func _on_player_position(pos: Vector2) -> void:
+	debug_display4.text = "pos: %0.0f, %0.0f" % [pos.x, pos.y]

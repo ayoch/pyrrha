@@ -92,75 +92,22 @@ offset_bottom = 78.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Debug_Display" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
-offset_right = 206.0
-offset_bottom = 16.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 2.0
-text = "Debug window.
+[node name="Debug_Display" type="Label" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(260, 24)
+text = ""
 
-"
-readonly = true
-virtual_keyboard_enabled = false
-selecting_enabled = false
-script = ExtResource( 1 )
-__meta__ = {
-"_editor_description_": ""
-}
+[node name="Debug_Display2" type="Label" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(260, 24)
+text = ""
 
-[node name="Debug_Display2" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
-offset_top = 20.0
-offset_right = 206.0
-offset_bottom = 37.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 2.0
-text = "Debug window.
-
-"
-readonly = true
-virtual_keyboard_enabled = false
-selecting_enabled = false
-script = ExtResource( 1 )
-__meta__ = {
-"_editor_description_": ""
-}
-
-[node name="Debug_Display3" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
-offset_top = 41.0
-offset_right = 206.0
-offset_bottom = 57.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 2.0
-text = "Debug window.
-
-"
-readonly = true
-virtual_keyboard_enabled = false
-selecting_enabled = false
+[node name="Debug_Display3" type="Label" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(260, 24)
+text = ""
 script = ExtResource( 6 )
-__meta__ = {
-"_editor_description_": ""
-}
 
-[node name="Debug_Display4" type="TextEdit" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
-offset_top = 61.0
-offset_right = 206.0
-offset_bottom = 78.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-size_flags_stretch_ratio = 2.0
-text = "Debug window.
-
-"
-readonly = true
-virtual_keyboard_enabled = false
-selecting_enabled = false
-__meta__ = {
-"_editor_description_": ""
-}
+[node name="Debug_Display4" type="Label" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(260, 24)
+text = ""
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/Rows/TopRow"]
 offset_left = 214.0
@@ -267,8 +214,6 @@ theme_override_styles/fg = SubResource( 1 )
 theme_override_styles/bg = SubResource( 2 )
 value = 80.0
 
-[node name="HealthTween" type="Tween" parent="MarginContainer/Rows/BottomRow/VBoxContainer/HealthSection"]
-
 [node name="ShieldSection" type="CenterContainer" parent="MarginContainer/Rows/BottomRow/VBoxContainer"]
 offset_top = 34.0
 offset_right = 200.0
@@ -283,8 +228,6 @@ mouse_filter = 2
 theme_override_styles/fg = SubResource( 5 )
 theme_override_styles/bg = SubResource( 2 )
 value = 80.0
-
-[node name="ShieldTween" type="Tween" parent="MarginContainer/Rows/BottomRow/VBoxContainer/ShieldSection"]
 
 [node name="EnergySection" type="CenterContainer" parent="MarginContainer/Rows/BottomRow/VBoxContainer"]
 offset_top = 68.0
@@ -302,7 +245,6 @@ theme_override_styles/fg = SubResource( 3 )
 theme_override_styles/bg = SubResource( 2 )
 value = 80.0
 
-[node name="EnergyTween" type="Tween" parent="MarginContainer/Rows/BottomRow/VBoxContainer/EnergySection"]
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 offset_left = 50.0

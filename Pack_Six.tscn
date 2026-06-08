@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[node name="Pack_Six" type="Node2D"]
+
+[node name="M0" type="Marker2D" parent="."]
+position = Vector2(200, 0)
+
+[node name="M1" type="Marker2D" parent="."]
+position = Vector2(100, -173)
+
+[node name="M2" type="Marker2D" parent="."]
+position = Vector2(-100, -173)
+
+[node name="M3" type="Marker2D" parent="."]
+position = Vector2(-200, 0)
+
+[node name="M4" type="Marker2D" parent="."]
+position = Vector2(-100, 173)
+
+[node name="M5" type="Marker2D" parent="."]
+position = Vector2(100, 173)

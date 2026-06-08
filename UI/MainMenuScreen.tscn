@@ -4,7 +4,6 @@
 [ext_resource path="res://UI/roboto_mono_64.tres" type="FontFile" id=2]
 [ext_resource path="res://UI/MainMenuScreen.gd" type="Script" id=3]
 [ext_resource path="res://UI/menu_style.tres" type="StyleBox" id=4]
-[ext_resource path="res://assets/Dark_River_logo.png" type="Texture2D" id=5]
 
 [node name="MainMenuScreen" type="CanvasLayer"]
 process_mode = 3
@@ -107,17 +106,6 @@ theme_override_constants/separation = 40
 __meta__ = {
 "_edit_use_anchors_": false
 }
-
-[node name="Sprite2D" type="Sprite2D" parent="PanelContainer/MarginContainer/Rows/CenterContainer2"]
-visible = false
-position = Vector2( 929.998, 110 )
-scale = Vector2( 0.03, 0.03 )
-texture = ExtResource( 5 )
-
-[node name="Sprite2" type="Sprite2D" parent="PanelContainer/MarginContainer"]
-position = Vector2( 806, 284 )
-scale = Vector2( 0.12, 0.12 )
-texture = ExtResource( 5 )
 
 [connection signal="pressed" from="PanelContainer/MarginContainer/Rows/CenterContainer/VBoxContainer/PlayButton" to="." method="_on_New_GameButton_pressed"]
 [connection signal="pressed" from="PanelContainer/MarginContainer/Rows/CenterContainer/VBoxContainer/QuitButton" to="." method="_on_QuitButton_pressed"]

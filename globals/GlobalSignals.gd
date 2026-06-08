@@ -1,15 +1,26 @@
 extends Node
 
-# Player
-signal active_room(room_name: String)
+# Control scheme. Read by Player; written by PauseMenu's Settings panel.
+enum ControlMode { MOUSE_TURN, KEYBOARD_TURN }
+var control_mode: int = ControlMode.MOUSE_TURN
+
+# Player lifecycle
 signal player_exists()
 signal broadcast_player_position(position: Vector2)
 signal player_health_changed(health: float)
 signal player_energy_changed(energy: float)
+signal player_shield_changed(shield: float)
+
+# Casualty score (cumulative deaths from Earth impacts).
+signal total_deaths_changed(total: int)
+
+# Stage / status bar — fired by AsteroidManager, displayed by GUI.
+signal status_message(text: String)
+signal game_won()
+signal player_died()
 signal update_speed(speed: float)
 
-# Combat / Noise
-signal made_noise(intensity: float, position: Vector2, source: String, height_layer: int)
+# Combat
 signal player_hit_asteroid(asteroid_name: String, damage: int)
 
 # Asteroids

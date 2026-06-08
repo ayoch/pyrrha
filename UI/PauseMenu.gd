@@ -12,12 +12,16 @@ extends CanvasLayer
 @onready var dialog_fast_btn: Button = $Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogFastButton
 @onready var dialog_normal_btn: Button = $Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogNormalButton
 @onready var dialog_slow_btn: Button = $Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogSlowButton
+@onready var ui_scale_slider: HSlider = $Backdrop/Center/SettingsPanel/Rows/UIScaleRow/UIScaleSlider
+@onready var ui_scale_label: Label = $Backdrop/Center/SettingsPanel/Rows/UIScaleRow/UIScaleLabel
+@onready var center: CenterContainer = $Backdrop/Center
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
 	settings_panel.visible = false
+	_apply_ui_scale(Settings.ui_scale)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -81,6 +85,11 @@ func _on_quit_pressed() -> void:
 
 # ---- Settings panel ---------------------------------------------------------
 
+func _apply_ui_scale(scale_val: float) -> void:
+	center.pivot_offset = center.size / 2.0
+	center.scale = Vector2(scale_val, scale_val)
+
+
 func _refresh_settings_state() -> void:
 	var m: int = GlobalSignals.control_mode
 	mouse_turn_btn.button_pressed = (m == GlobalSignals.ControlMode.MOUSE_TURN)
@@ -90,6 +99,8 @@ func _refresh_settings_state() -> void:
 	dialog_fast_btn.button_pressed   = (d == 4.0)
 	dialog_normal_btn.button_pressed = (d == 7.0)
 	dialog_slow_btn.button_pressed   = (d == 12.0)
+	ui_scale_slider.value = Settings.ui_scale
+	ui_scale_label.text = "%.2fx" % Settings.ui_scale
 
 
 func _on_mouse_turn_pressed() -> void:
@@ -120,6 +131,13 @@ func _on_dialog_normal_pressed() -> void:
 func _on_dialog_slow_pressed() -> void:
 	GlobalSignals.dialog_dismiss_sec = 12.0
 	_refresh_settings_state()
+
+
+func _on_ui_scale_changed(value: float) -> void:
+	Settings.ui_scale = value
+	Settings.save()
+	ui_scale_label.text = "%.2fx" % value
+	_apply_ui_scale(value)
 
 
 func _on_back_pressed() -> void:

@@ -116,6 +116,27 @@ size_flags_horizontal = 3
 toggle_mode = true
 text = "Slow"
 
+[node name="UIScaleTitle" type="Label" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+text = "UI Scale"
+
+[node name="UIScaleRow" type="HBoxContainer" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+
+[node name="UIScaleSlider" type="HSlider" parent="Backdrop/Center/SettingsPanel/Rows/UIScaleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.5
+max_value = 2.0
+step = 0.05
+value = 1.0
+
+[node name="UIScaleLabel" type="Label" parent="Backdrop/Center/SettingsPanel/Rows/UIScaleRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(48, 0)
+text = "1.00x"
+horizontal_alignment = 2
+
 [node name="BackButton" type="Button" parent="Backdrop/Center/SettingsPanel/Rows"]
 layout_mode = 2
 text = "Back"
@@ -132,4 +153,5 @@ text = "Back"
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogFastButton" to="." method="_on_dialog_fast_pressed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogNormalButton" to="." method="_on_dialog_normal_pressed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogSlowButton" to="." method="_on_dialog_slow_pressed"]
+[connection signal="value_changed" from="Backdrop/Center/SettingsPanel/Rows/UIScaleRow/UIScaleSlider" to="." method="_on_ui_scale_changed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/BackButton" to="." method="_on_back_pressed"]

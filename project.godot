@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.6")
 [autoload]
 
 GlobalSignals="*res://globals/GlobalSignals.gd"
+Settings="*res://globals/Settings.gd"
 
 [display]
 

@@ -45,6 +45,15 @@ const UPGRADE_DATA := {
 			{"cost": 500, "label": "+300 thrust"},
 		],
 	},
+	"capacitors": {
+		"name": "Capacitor Bank",
+		"desc": "High-density cells store more energy without changing recharge rate.",
+		"tiers": [
+			{"cost": 125, "label": "+50 max energy"},
+			{"cost": 225, "label": "+50 max energy"},
+			{"cost": 350, "label": "+50 max energy"},
+		],
+	},
 }
 
 var _credits_label: Label
@@ -117,6 +126,8 @@ func _apply_upgrade(key: String, tier_index: int) -> void:
 			player.energy_regen_per_sec += 15
 		"engines":
 			player.thrust_forward += 300
+		"capacitors":
+			player.max_energy += 50
 
 
 func _get_player() -> Player:
@@ -223,7 +234,7 @@ func _build_ui() -> void:
 	cards.add_theme_constant_override("separation", 16)
 	root.add_child(cards)
 
-	for key: String in ["hull", "shields", "energy", "engines"]:
+	for key: String in ["hull", "shields", "energy", "capacitors", "engines"]:
 		cards.add_child(_make_card(key))
 
 	root.add_child(HSeparator.new())

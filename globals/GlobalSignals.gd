@@ -35,6 +35,7 @@ var upgrade_hull: int = 0
 var upgrade_shields: int = 0
 var upgrade_energy: int = 0
 var upgrade_engines: int = 0
+var upgrade_capacitors: int = 0
 
 func award_credits(amount: int) -> void:
 	credits += amount
@@ -55,6 +56,7 @@ func reset_progress() -> void:
 	upgrade_shields = 0
 	upgrade_energy = 0
 	upgrade_engines = 0
+	upgrade_capacitors = 0
 	emit_signal("credits_changed", credits)
 signal game_won()
 signal player_died()

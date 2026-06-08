@@ -24,6 +24,33 @@ signal dialog_message(speaker: String, icon_key: String, text: String)
 # Dialog settings (read by DialogBox; written by PauseMenu settings).
 var dialog_enabled: bool = true
 var dialog_dismiss_sec: float = 7.0
+
+# Station shop
+signal open_station_shop()
+signal station_shop_departed()
+signal credits_changed(amount: int)
+
+var credits: int = 0
+var upgrade_hull: int = 0
+var upgrade_shields: int = 0
+var upgrade_energy: int = 0
+var upgrade_engines: int = 0
+
+func award_credits(amount: int) -> void:
+	credits += amount
+	emit_signal("credits_changed", credits)
+
+func spend_credits(amount: int) -> void:
+	credits = max(0, credits - amount)
+	emit_signal("credits_changed", credits)
+
+func reset_progress() -> void:
+	credits = 0
+	upgrade_hull = 0
+	upgrade_shields = 0
+	upgrade_energy = 0
+	upgrade_engines = 0
+	emit_signal("credits_changed", credits)
 signal game_won()
 signal player_died()
 signal update_speed(speed: float)

@@ -120,12 +120,23 @@ const DUST_COUNT_BY_SIZE := {4: 80, 3: 40, 2: 20, 1: 8}
 enum Phase { ACTIVE, RESPITE, WON, DEAD }
 
 const STAGES := [
-	{"duration": 45.0, "threats": 1, "boss": "fastball"},
-	{"duration": 60.0, "threats": 2, "boss": "double_fastball"},
-	{"duration": 75.0, "threats": 3, "boss": "clump_6"},
-	{"duration": 90.0, "threats": 4, "boss": "clump_plus_fastball"},
-	{"duration": 90.0, "threats": 5, "boss": "layered_clump"},
-	{"duration": 90.0, "threats": 6, "boss": "finale"},
+	{"duration": 45.0, "threats": 1, "boss": "fastball",            "base_credits": 150},
+	{"duration": 60.0, "threats": 2, "boss": "double_fastball",     "base_credits": 200},
+	{"duration": 75.0, "threats": 3, "boss": "clump_6",             "base_credits": 275},
+	{"duration": 90.0, "threats": 4, "boss": "clump_plus_fastball", "base_credits": 350},
+	{"duration": 90.0, "threats": 5, "boss": "layered_clump",       "base_credits": 450},
+	{"duration": 90.0, "threats": 6, "boss": "finale",              "base_credits": 550},
+]
+
+# Credits awarded = base_credits * pct, where pct is determined by how many
+# people died on Earth during the stage. Find the highest tier whose
+# min_deaths <= stage_deaths.
+const CREDIT_TIERS := [
+	{"min_deaths": 0,           "pct": 1.00},
+	{"min_deaths": 1,           "pct": 0.85},
+	{"min_deaths": 10_000,      "pct": 0.70},
+	{"min_deaths": 100_000,     "pct": 0.50},
+	{"min_deaths": 1_000_000,   "pct": 0.25},
 ]
 
 # Boss patterns: each is a list of {at: seconds_after_boss_start, fn: method_name, args: Array}
@@ -216,6 +227,8 @@ var _earth_image: Image
 var _earth_image_scale: float = 1.0   # the Earth sprite's scale at image-capture time
 var _density_noise: FastNoiseLite
 var _total_deaths: int = 0
+var _stage_deaths_start: int = 0   # _total_deaths snapshot at start of each stage
+var _shop_opened_this_respite: bool = false
 
 # Dust cloud pool. Dust nodes are kept as children of this manager and reused.
 var _dust_pool: Array = []
@@ -233,6 +246,7 @@ func _ready() -> void:
 	_rng.randomize()
 	GlobalSignals.connect("asteroid_died", Callable(self, "_on_asteroid_died"))
 	GlobalSignals.connect("player_died", Callable(self, "_on_player_died"))
+	GlobalSignals.station_shop_departed.connect(_on_shop_departed)
 	_build_break_recipes()
 	_build_polygon_cache()
 	_build_population_data()
@@ -778,6 +792,8 @@ func _start_stage(idx: int) -> void:
 	_boss_queue = []
 	_boss_started = false
 	_boss_queue_empty_at = -1.0
+	_shop_opened_this_respite = false
+	_stage_deaths_start = _total_deaths
 	var s: Dictionary = STAGES[idx]
 	# Spread threat spawns evenly through the stage duration (after a small
 	# warm-in so the first one doesn't land instantly).
@@ -805,6 +821,11 @@ func _advance_phase(delta: float) -> void:
 func _on_player_died() -> void:
 	_phase = Phase.DEAD
 	spawn_timer.stop()
+	GlobalSignals.reset_progress()
+
+
+func _on_shop_departed() -> void:
+	_has_docked_this_respite = true
 
 
 func _tick_threats() -> void:
@@ -850,6 +871,8 @@ func _boss_total_duration() -> float:
 
 
 func _begin_respite() -> void:
+	var stage_deaths: int = _total_deaths - _stage_deaths_start
+	GlobalSignals.award_credits(_calculate_stage_credits(stage_deaths))
 	if _stage_index + 1 >= STAGES.size():
 		_phase = Phase.WON
 		GlobalSignals.emit_signal("game_won")
@@ -860,22 +883,31 @@ func _begin_respite() -> void:
 	_heal_accum_h = 0.0
 	_heal_accum_s = 0.0
 	_has_docked_this_respite = false
+	_shop_opened_this_respite = false
 	GlobalSignals.emit_signal("status_message", "Dock at the station for repairs and a rest.")
 
 
-func _tick_respite(delta: float) -> void:
+func _calculate_stage_credits(stage_deaths: int) -> int:
+	var base: int = STAGES[_stage_index].base_credits
+	var pct: float = 1.0
+	for tier in CREDIT_TIERS:
+		if stage_deaths >= tier.min_deaths:
+			pct = tier.pct
+	return int(base * pct)
+
+
+func _tick_respite(_delta: float) -> void:
 	var station = get_tree().get_first_node_in_group("station")
 	var player = get_tree().get_first_node_in_group("player")
 	if station == null or player == null:
 		return
 	var dist: float = player.global_position.distance_to(station.global_position)
 	var near_station: bool = dist <= STATION_HEAL_RADIUS
-	if near_station:
-		_has_docked_this_respite = true
-		_heal_player(player, delta)
-	# Once the player has docked at least once, leaving the vicinity advances
-	# the stage. Until they've docked, they hang in respite (and the prompt
-	# nudges them toward the station).
+	# Open the shop the first time the player reaches the station.
+	if near_station and not _shop_opened_this_respite:
+		_shop_opened_this_respite = true
+		GlobalSignals.emit_signal("open_station_shop")
+	# After the player has departed the shop and flown away, advance the stage.
 	if _has_docked_this_respite and not near_station:
 		_start_stage(_stage_index + 1)
 		return

@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://PlayerCamera.gd" id="1"]
 [ext_resource type="Script" path="res://Starfield_Manager.gd" id="3"]
@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" path="res://EarthExplosionStage.tscn" id="12"]
 [ext_resource type="PackedScene" path="res://UI/WinScreen.tscn" id="13"]
 [ext_resource type="PackedScene" path="res://UI/DialogBox.tscn" id="15"]
+[ext_resource type="PackedScene" path="res://UI/StationShop.tscn" id="16"]
 [ext_resource type="PackedScene" path="res://UI/DeathScreen.tscn" id="14"]
 
 [node name="Main" type="Node2D"]
@@ -70,6 +71,8 @@ autostart = false
 [node name="DeathScreen" parent="." instance=ExtResource("14")]
 
 [node name="DialogBox" parent="." instance=ExtResource("15")]
+
+[node name="StationShop" parent="." instance=ExtResource("16")]
 
 [connection signal="timeout" from="Asteroid_Manager/Asteroid_Spawn_Timer" to="Asteroid_Manager" method="_on_Asteroid_Spawn_Timer_timeout"]
 [connection signal="timeout" from="Asteroid_Manager/Stage_Timer" to="Asteroid_Manager" method="_on_Stage_Timer_timeout"]

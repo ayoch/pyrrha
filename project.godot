@@ -20,6 +20,8 @@ GlobalSignals="*res://globals/GlobalSignals.gd"
 
 [display]
 
+window/size/viewport_width=2304
+window/size/viewport_height=1296
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 

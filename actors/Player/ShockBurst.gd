@@ -4,12 +4,12 @@ class_name ShockBurst
 # Brief radial spark/flash at a contact point. Pooled — emit() resets state,
 # _process animates fade and slight expansion, returns to pool via callback.
 
-@export var lifetime: float = 0.18
-@export var num_rays: int = 8
-@export var inner_radius: float = 3.0
-@export var outer_radius: float = 22.0
-@export var color: Color = Color(1.0, 0.95, 0.7, 1.0)
-@export var line_width: float = 1.6
+@export var lifetime: float = 0.28
+@export var num_rays: int = 12
+@export var inner_radius: float = 4.0
+@export var outer_radius: float = 38.0
+@export var color: Color = Color(1.0, 0.8, 0.15, 1.0)
+@export var line_width: float = 2.5
 
 var _age: float = 0.0
 var _on_done: Callable

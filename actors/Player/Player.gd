@@ -243,8 +243,8 @@ func _set_flame(node: AnimatedSprite2D, on: bool) -> void:
 		node.visible = true
 		if not node.is_playing():
 			node.play("burn")
-		var b: float = randf_range(0.75, 1.0)
-		node.modulate = Color(b, b, b, 1.0)
+		var b: float = randf_range(1.0, 1.6)
+		node.modulate = Color(b, b * 0.75, b * 0.4, 1.0)
 	else:
 		if node.is_playing():
 			node.stop()
@@ -337,6 +337,11 @@ func _handle_energy(delta: float) -> void:
 		or Input.is_action_pressed("right")
 		or Input.is_action_pressed("stop")
 	)
+	var rotating: bool = false
+	if GlobalSignals.control_mode == GlobalSignals.ControlMode.MOUSE_TURN \
+			and not Input.is_action_pressed("stop"):
+		var angle: float = get_angle_to(get_global_mouse_position())
+		rotating = abs(angle) > TURN_TOLERANCE
 	var defense_firing: bool = false
 	if _defense_turret != null and _defense_turret.has_method("is_firing"):
 		defense_firing = _defense_turret.is_firing()
@@ -345,6 +350,8 @@ func _handle_energy(delta: float) -> void:
 		rate -= mining_energy_drain_per_sec
 	if thrusting:
 		rate -= thrust_energy_drain_per_sec
+	if rotating:
+		rate -= thrust_energy_drain_per_sec * 0.4
 	if defense_firing:
 		rate -= thrust_energy_drain_per_sec * 0.75
 	if rate == 0.0 and energy < max_energy:

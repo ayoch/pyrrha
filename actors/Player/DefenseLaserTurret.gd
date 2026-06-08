@@ -4,7 +4,7 @@ class_name DefenseLaserTurret
 @export var range_units: float = 800.0
 @export var fire_rate_hz: float = 4.0
 @export var laser_damage_per_tick: int = 8
-@export var beam_color: Color = Color(1.0, 0.35, 0.05, 1.0)
+@export var beam_color: Color = Color(1.0, 0.45, 0.0, 1.0)
 @export var beam_flash_duration: float = 0.07
 
 var energy_fraction: float = 1.0
@@ -18,7 +18,7 @@ var _active_target: bool = false
 
 func _ready() -> void:
 	_beam = Line2D.new()
-	_beam.width = 2.0
+	_beam.width = 3.5
 	_beam.default_color = beam_color
 	_beam.joint_mode = Line2D.LINE_JOINT_ROUND
 	_beam.begin_cap_mode = Line2D.LINE_CAP_ROUND

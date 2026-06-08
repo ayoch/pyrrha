@@ -99,6 +99,7 @@ var _shock_scene: PackedScene = preload("res://actors/Player/ShockBurst.tscn")
 @export var laser_spark_chance: float = 0.25
 
 var earth_location := Vector2.ZERO  # updated each frame from the Earth node if it exists
+var _defense_turret: Node = null
 
 
 func _ready() -> void:
@@ -120,6 +121,7 @@ func _ready() -> void:
 		ripple_root.add_child(s)   # shares the top-level root with ripples
 		_shock_free.push_back(s)
 	_update_collision_shapes()
+	_defense_turret = find_child("DefenseLaserTurret", false, false)
 	GlobalSignals.emit_signal("player_exists")
 
 
@@ -140,6 +142,7 @@ func _physics_process(delta: float) -> void:
 		_handle_thrust(delta)
 	_handle_mining_laser(delta)
 	_handle_energy(delta)
+	_push_energy_to_turret()
 	_regenerate_shield(delta)
 	_handle_zoom()
 	_handle_nav_cycle()
@@ -181,13 +184,14 @@ func _handle_turning(delta: float) -> void:
 
 
 func _handle_thrust(delta: float) -> void:
+	var energy_frac: float = float(energy) / float(max_energy)
 	var forward := Vector2.RIGHT.rotated(rotation)
 	var thrusting_forward := Input.is_action_pressed("forward")
 	var thrusting_back := Input.is_action_pressed("back")
 	if thrusting_forward:
-		velocity += forward * thrust_forward * delta
+		velocity += forward * thrust_forward * energy_frac * delta
 	if thrusting_back:
-		velocity -= forward * thrust_reverse * delta
+		velocity -= forward * thrust_reverse * energy_frac * delta
 
 	var strafe_left := false
 	var strafe_right := false
@@ -197,9 +201,9 @@ func _handle_thrust(delta: float) -> void:
 		strafe_right = Input.is_action_pressed("right")
 		strafe_left = Input.is_action_pressed("left")
 		if strafe_right:
-			velocity += ship_right * thrust_strafe * delta
+			velocity += ship_right * thrust_strafe * energy_frac * delta
 		if strafe_left:
-			velocity -= ship_right * thrust_strafe * delta
+			velocity -= ship_right * thrust_strafe * energy_frac * delta
 	# In KEYBOARD_TURN mode, A/D rotate (handled in _handle_turning); no strafe.
 
 	_update_thrusters(thrusting_forward, thrusting_back, strafe_left, strafe_right)
@@ -311,7 +315,7 @@ func _handle_mining_laser(_delta: float) -> void:
 	mining_beam_right.clear_points()
 	mining_beam_left.visible = false
 	mining_beam_right.visible = false
-	if energy <= 0 or not Input.is_action_pressed("shoot"):
+	if not Input.is_action_pressed("shoot"):
 		return
 	var half_cone: float = deg_to_rad(mining_cone_degrees * 0.5)
 	if abs(get_angle_to(get_global_mouse_position())) > half_cone:
@@ -322,8 +326,9 @@ func _handle_mining_laser(_delta: float) -> void:
 
 # Unified energy budget. Any active drain stops regen for that frame; idle
 # frames refill. Mining drains heavily, thrust drains modestly.
+# Defense laser drain is read from the turret child node each frame.
 func _handle_energy(delta: float) -> void:
-	var laser_firing: bool = energy > 0 and Input.is_action_pressed("shoot") \
+	var laser_firing: bool = Input.is_action_pressed("shoot") \
 		and abs(get_angle_to(get_global_mouse_position())) <= deg_to_rad(mining_cone_degrees * 0.5)
 	var thrusting: bool = (
 		Input.is_action_pressed("forward")
@@ -332,11 +337,16 @@ func _handle_energy(delta: float) -> void:
 		or Input.is_action_pressed("right")
 		or Input.is_action_pressed("stop")
 	)
+	var defense_firing: bool = false
+	if _defense_turret != null and _defense_turret.has_method("is_firing"):
+		defense_firing = _defense_turret.is_firing()
 	var rate: float = 0.0
 	if laser_firing:
 		rate -= mining_energy_drain_per_sec
 	if thrusting:
 		rate -= thrust_energy_drain_per_sec
+	if defense_firing:
+		rate -= mining_energy_drain_per_sec * 0.5
 	if rate == 0.0 and energy < max_energy:
 		rate = energy_regen_per_sec
 	if rate == 0.0:
@@ -352,6 +362,7 @@ func _handle_energy(delta: float) -> void:
 
 
 func _fire_beam(beam: Line2D, ray: RayCast2D) -> void:
+	var energy_frac: float = float(energy) / float(max_energy)
 	beam.add_point(Vector2.ZERO)
 	beam.add_point(beam.get_local_mouse_position())
 	ray.target_position = ray.get_local_mouse_position()
@@ -360,11 +371,15 @@ func _fire_beam(beam: Line2D, ray: RayCast2D) -> void:
 		var collider = ray.get_collider()
 		var hit_point: Vector2 = ray.get_collision_point()
 		if collider and "type" in collider and collider.type == "asteroid":
-			GlobalSignals.emit_signal("player_hit_asteroid", collider.name, mining_damage_per_tick)
+			var dmg: int = max(1, int(mining_damage_per_tick * energy_frac))
+			GlobalSignals.emit_signal("player_hit_asteroid", collider.name, dmg)
 			# Occasional spark at the hit point so mining looks like cutting, not a static beam.
 			if randf() < laser_spark_chance:
 				_spawn_shock(hit_point)
 		beam.set_point_position(1, beam.to_local(hit_point))
+	# Fade the beam color to reflect reduced power.
+	var alpha: float = lerpf(0.25, 1.0, energy_frac)
+	beam.modulate = Color(1.0, 1.0, 1.0, alpha)
 	beam.visible = true
 
 
@@ -481,6 +496,11 @@ func _resolve_slide_collisions(pre_move_vel: Vector2) -> void:
 # ----------------------------------------------------------------------
 # Misc UI
 # ----------------------------------------------------------------------
+
+func _push_energy_to_turret() -> void:
+	if _defense_turret != null:
+		_defense_turret.energy_fraction = float(energy) / float(max_energy)
+
 
 func _handle_zoom() -> void:
 	if Input.is_action_pressed("zoom in"):

@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://fmr186h12jj7" path="res://Ship_System_RetrogradeIndicator.png" id="6"]
 [ext_resource type="Texture2D" uid="uid://coy84i6dt0173" path="res://assets/earth.png" id="7"]
 [ext_resource type="PackedScene" path="res://actors/Player/MassDriverTurret.tscn" id="8"]
+[ext_resource type="PackedScene" path="res://actors/Player/DefenseLaserTurret.tscn" id="12"]
 [ext_resource type="Texture2D" uid="uid://bpwaegbvmqyt6" path="res://assets/thruster_flame_1.png" id="9"]
 [ext_resource type="Texture2D" uid="uid://son5u65w0sar" path="res://assets/thruster_flame_2.png" id="10"]
 [ext_resource type="Texture2D" uid="uid://e3rriton5ijl" path="res://assets/thruster_flame_3.png" id="11"]
@@ -192,6 +193,9 @@ scale = Vector2(0.01, 0.01)
 texture = ExtResource("7")
 
 [node name="MassDriverTurret" parent="." unique_id=1814100994 instance=ExtResource("8")]
+
+[node name="DefenseLaserTurret" parent="." unique_id=1814100995 instance=ExtResource("12")]
+position = Vector2(130, 0)
 
 [node name="CollisionBox" type="CollisionPolygon2D" parent="." unique_id=1011919871]
 polygon = PackedVector2Array(113, 0, 63, -20, 58, -28, 28, -70, -32, -58, -54, -38, -107, 0, -54, 38, -32, 58, 28, 70, 58, 28, 63, 20)

@@ -120,12 +120,12 @@ const DUST_COUNT_BY_SIZE := {4: 80, 3: 40, 2: 20, 1: 8}
 enum Phase { ACTIVE, RESPITE, WON, DEAD }
 
 const STAGES := [
-	{"duration": 45.0, "threats": 1, "boss": "fastball",            "base_credits": 200},
-	{"duration": 60.0, "threats": 2, "boss": "double_fastball",     "base_credits": 275},
-	{"duration": 75.0, "threats": 3, "boss": "clump_6",             "base_credits": 375},
-	{"duration": 90.0, "threats": 4, "boss": "clump_plus_fastball", "base_credits": 475},
-	{"duration": 90.0, "threats": 5, "boss": "layered_clump",       "base_credits": 600},
-	{"duration": 90.0, "threats": 6, "boss": "finale",              "base_credits": 725},
+	{"duration": 45.0, "threats": 1, "boss": "fastball",              "base_credits": 200, "max_threats": 2, "sleeper_chance": 0.00},
+	{"duration": 60.0, "threats": 2, "boss": "double_fastball",       "base_credits": 275, "max_threats": 3, "sleeper_chance": 0.00},
+	{"duration": 75.0, "threats": 3, "boss": "clump_4",               "base_credits": 375, "max_threats": 4, "sleeper_chance": 0.00},
+	{"duration": 90.0, "threats": 4, "boss": "clump_4_plus_fastball", "base_credits": 475, "max_threats": 5, "sleeper_chance": 0.05},
+	{"duration": 90.0, "threats": 5, "boss": "clump_6",               "base_credits": 600, "max_threats": 6, "sleeper_chance": 0.15},
+	{"duration": 90.0, "threats": 6, "boss": "finale",                "base_credits": 725, "max_threats": 7, "sleeper_chance": 0.25},
 ]
 
 # Credits awarded = base_credits * pct, where pct is determined by how many
@@ -148,21 +148,19 @@ const BOSS_PATTERNS := {
 		{"at": 0.0, "fn": "_spawn_fastball", "args": []},
 		{"at": 0.6, "fn": "_spawn_fastball", "args": []},
 	],
-	"clump_6": [
-		{"at": 0.0, "fn": "_spawn_clump", "args": [6, false]},
+	"clump_4": [
+		{"at": 0.0, "fn": "_spawn_clump", "args": [4, false]},
 	],
-	"clump_plus_fastball": [
-		{"at": 0.0, "fn": "_spawn_clump", "args": [6, false]},
+	"clump_4_plus_fastball": [
+		{"at": 0.0, "fn": "_spawn_clump", "args": [4, false]},
 		{"at": 2.0, "fn": "_spawn_fastball", "args": []},
 	],
-	"layered_clump": [
-		{"at": 0.0, "fn": "_spawn_clump", "args": [6, false]},
-		{"at": 3.0, "fn": "_spawn_clump", "args": [12, true]},
+	"clump_6": [
+		{"at": 0.0, "fn": "_spawn_clump", "args": [6, true]},
 	],
 	"finale": [
-		{"at": 0.0, "fn": "_spawn_clump", "args": [12, true]},
+		{"at": 0.0, "fn": "_spawn_clump", "args": [6, true]},
 		{"at": 2.0, "fn": "_spawn_fastball", "args": []},
-		{"at": 4.0, "fn": "_spawn_fastball", "args": []},
 	],
 }
 
@@ -206,6 +204,9 @@ var _threat_schedule: Array = []   # remaining {at: float} entries this stage
 var _boss_queue: Array = []        # remaining {at, fn, args} this boss
 var _boss_started: bool = false
 var _boss_queue_empty_at: float = -1.0   # _phase_elapsed when boss queue last drained
+# Threat rocks waiting for a slot under the stage's max_threats cap. Each entry
+# is a Dictionary {velocity_mult, position_override, size}.
+var _threat_backlog: Array = []
 const WHOLE_CLEAR_TIMEOUT := 25.0        # fallback: enter respite even if whole rocks remain
 var _heal_accum_h: float = 0.0
 var _heal_accum_s: float = 0.0
@@ -643,12 +644,16 @@ func _count_active_asteroids() -> int:
 	return n
 
 
-func _count_whole_earth_threats() -> int:
-	var n := 0
+func _count_earth_threats() -> int:
+	var n: int = 0
 	for c in get_children():
-		if c.is_in_group("asteroid") and "has_impact_fate" in c and c.has_impact_fate and c.size == SIZE_WHOLE:
+		if c.is_in_group("asteroid") and c.is_threat:
 			n += 1
 	return n
+
+
+func _any_rocks_threatening_earth() -> bool:
+	return _count_earth_threats() > 0
 
 
 func _cull_distant_and_report() -> void:
@@ -801,6 +806,7 @@ func _start_stage(idx: int) -> void:
 	_boss_queue = []
 	_boss_started = false
 	_boss_queue_empty_at = -1.0
+	_threat_backlog.clear()
 	_shop_opened_this_respite = false
 	_stage_deaths_start = _total_deaths
 	var s: Dictionary = STAGES[idx]
@@ -819,6 +825,7 @@ func _advance_phase(delta: float) -> void:
 		Phase.ACTIVE:
 			_phase_elapsed += delta
 			_tick_threats()
+			_drain_threat_backlog()
 			_tick_boss(delta)
 		Phase.RESPITE:
 			_phase_elapsed += delta
@@ -843,7 +850,7 @@ func _on_shop_departed() -> void:
 func _tick_threats() -> void:
 	while not _threat_schedule.is_empty() and _threat_schedule[0].at <= _phase_elapsed:
 		_threat_schedule.pop_front()
-		_spawn_threat_rock()
+		_threat_backlog.append({"velocity_mult": 1.0, "position_override": null, "size": SIZE_WHOLE})
 	# When stage duration elapses, hand off to the boss (if not already started).
 	if not _boss_started and _phase_elapsed >= STAGES[_stage_index].duration:
 		_boss_started = true
@@ -863,15 +870,16 @@ func _tick_boss(_delta: float) -> void:
 		callv(ev.fn, ev.args)
 	if not _boss_queue.is_empty():
 		return
-	# All boss events fired. Record when that happened.
+	# All boss events fired. Don't start the clear timer until both the threat
+	# backlog and spawn queue have drained — otherwise checking threats on the
+	# same frame they're queued would see an empty field and trigger respite.
+	if not _threat_backlog.is_empty() or not _spawn_queue.is_empty():
+		return
 	if _boss_queue_empty_at < 0.0:
 		_boss_queue_empty_at = _phase_elapsed
-	# Wait until whole rocks are cleared — either destroyed/impacted or past a
-	# timeout. This prevents the dock prompt from appearing while threat rocks
-	# are still in flight.
 	var elapsed_since_clear: float = _phase_elapsed - _boss_queue_empty_at
-	var wholes_gone: bool = _count_whole_earth_threats() == 0
-	if wholes_gone or elapsed_since_clear >= WHOLE_CLEAR_TIMEOUT:
+	var threats_gone: bool = not _any_rocks_threatening_earth()
+	if threats_gone or elapsed_since_clear >= WHOLE_CLEAR_TIMEOUT:
 		_begin_respite()
 
 
@@ -973,11 +981,12 @@ func _spawn_threat_rock(velocity_mult: float = 1.0, position_override: Variant =
 			   _polygon_for_texture.get(tex, PackedVector2Array()),
 			   SIZE_SCALES[size], spawn_pos, vel,
 			   _rng.randf_range(-0.2, 0.2), 100)
+	rock.is_threat = true
 	_spawn_queue.append(rock)
 
 
 func _spawn_fastball() -> void:
-	_spawn_threat_rock(FASTBALL_SPEED_MULT)
+	_threat_backlog.append({"velocity_mult": FASTBALL_SPEED_MULT, "position_override": null, "size": SIZE_WHOLE})
 
 
 func _spawn_clump(count: int, big: bool) -> void:
@@ -991,7 +1000,21 @@ func _spawn_clump(count: int, big: bool) -> void:
 		var offset: Vector2 = Vector2(
 			_rng.randf_range(-CLUMP_SPACING, CLUMP_SPACING),
 			_rng.randf_range(-CLUMP_SPACING, CLUMP_SPACING))
-		_spawn_threat_rock(1.0 if big else 0.8, cluster_center + offset, SIZE_WHOLE)
+		_threat_backlog.append({"velocity_mult": 1.0 if big else 0.8, "position_override": cluster_center + offset, "size": SIZE_WHOLE})
+
+
+# Fire a full volley from the backlog, but only when the field is clear.
+# Holds until all live threat rocks are gone, then dumps up to max_threats at once.
+func _drain_threat_backlog() -> void:
+	if _threat_backlog.is_empty():
+		return
+	if _count_earth_threats() > 0:
+		return
+	var cap: int = STAGES[_stage_index].max_threats
+	var to_fire: int = min(_threat_backlog.size(), cap)
+	for i in to_fire:
+		var entry: Dictionary = _threat_backlog.pop_front()
+		_spawn_threat_rock(entry.velocity_mult, entry.position_override, entry.size)
 
 
 # Vestigial: old timer connection in the .tscn still routes here. No-op now.

@@ -75,40 +75,6 @@ offset_bottom = 78.0
 mouse_filter = 2
 size_flags_vertical = 3
 
-[node name="RichTextLabel" type="RichTextLabel" parent="MarginContainer/Rows/TopRow"]
-offset_bottom = 78.0
-text = "test
-"
-
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/Rows/TopRow"]
-offset_left = 4.0
-offset_right = 210.0
-offset_bottom = 78.0
-size_flags_horizontal = 3
-
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/Rows/TopRow/HBoxContainer"]
-offset_right = 206.0
-offset_bottom = 78.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="Debug_Display" type="Label" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(260, 24)
-text = ""
-
-[node name="Debug_Display2" type="Label" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(260, 24)
-text = ""
-
-[node name="Debug_Display3" type="Label" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(260, 24)
-text = ""
-script = ExtResource( 6 )
-
-[node name="Debug_Display4" type="Label" parent="MarginContainer/Rows/TopRow/HBoxContainer/VBoxContainer"]
-custom_minimum_size = Vector2(260, 24)
-text = ""
-
 [node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/Rows/TopRow"]
 offset_left = 214.0
 offset_right = 714.0
@@ -138,7 +104,6 @@ __meta__ = {
 "_editor_description_": ""
 }
 
-[node name="Mini_Map" parent="MarginContainer/Rows/TopRow/HBoxContainer2" instance=ExtResource( 5 )]
 
 [node name="MiddleRow" type="HBoxContainer" parent="MarginContainer/Rows"]
 offset_top = 82.0
@@ -195,17 +160,19 @@ size_flags_stretch_ratio = 1.08
 text = "Speed"
 script = ExtResource( 4 )
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/Rows/BottomRow"]
-offset_left = 723.0
-offset_right = 923.0
-offset_bottom = 98.0
+[node name="StatsPanel" type="VBoxContainer" parent="."]
+offset_left = 2054.0
+offset_top = 1148.0
+offset_right = 2254.0
+offset_bottom = 1246.0
+mouse_filter = 2
 
-[node name="HealthSection" type="CenterContainer" parent="MarginContainer/Rows/BottomRow/VBoxContainer"]
+[node name="HealthSection" type="CenterContainer" parent="StatsPanel"]
 offset_right = 200.0
 offset_bottom = 30.0
 mouse_filter = 2
 
-[node name="HealthBar" type="ProgressBar" parent="MarginContainer/Rows/BottomRow/VBoxContainer/HealthSection"]
+[node name="HealthBar" type="ProgressBar" parent="StatsPanel/HealthSection"]
 offset_right = 200.0
 offset_bottom = 30.0
 custom_minimum_size = Vector2( 200, 30 )
@@ -214,13 +181,13 @@ theme_override_styles/fg = SubResource( 1 )
 theme_override_styles/bg = SubResource( 2 )
 value = 80.0
 
-[node name="ShieldSection" type="CenterContainer" parent="MarginContainer/Rows/BottomRow/VBoxContainer"]
+[node name="ShieldSection" type="CenterContainer" parent="StatsPanel"]
 offset_top = 34.0
 offset_right = 200.0
 offset_bottom = 64.0
 mouse_filter = 2
 
-[node name="ShieldBar" type="ProgressBar" parent="MarginContainer/Rows/BottomRow/VBoxContainer/ShieldSection"]
+[node name="ShieldBar" type="ProgressBar" parent="StatsPanel/ShieldSection"]
 offset_right = 200.0
 offset_bottom = 30.0
 custom_minimum_size = Vector2( 200, 30 )
@@ -229,13 +196,13 @@ theme_override_styles/fg = SubResource( 5 )
 theme_override_styles/bg = SubResource( 2 )
 value = 80.0
 
-[node name="EnergySection" type="CenterContainer" parent="MarginContainer/Rows/BottomRow/VBoxContainer"]
+[node name="EnergySection" type="CenterContainer" parent="StatsPanel"]
 offset_top = 68.0
 offset_right = 200.0
 offset_bottom = 98.0
 mouse_filter = 2
 
-[node name="EnergyBar" type="ProgressBar" parent="MarginContainer/Rows/BottomRow/VBoxContainer/EnergySection"]
+[node name="EnergyBar" type="ProgressBar" parent="StatsPanel/EnergySection"]
 offset_right = 200.0
 offset_bottom = 30.0
 custom_minimum_size = Vector2( 200, 30 )
@@ -245,6 +212,15 @@ theme_override_styles/fg = SubResource( 3 )
 theme_override_styles/bg = SubResource( 2 )
 value = 80.0
 
+[node name="MinimapPanel" type="Control" parent="."]
+offset_left = 1994.0
+offset_top = 50.0
+offset_right = 2254.0
+offset_bottom = 310.0
+mouse_filter = 2
+
+[node name="Mini_Map" parent="MinimapPanel" instance=ExtResource( 5 )]
+position = Vector2(130, 130)
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 offset_left = 50.0

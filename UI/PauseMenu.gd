@@ -15,6 +15,8 @@ extends CanvasLayer
 @onready var ui_scale_slider: HSlider = $Backdrop/Center/SettingsPanel/Rows/UIScaleRow/UIScaleSlider
 @onready var ui_scale_label: Label = $Backdrop/Center/SettingsPanel/Rows/UIScaleRow/UIScaleLabel
 @onready var center: CenterContainer = $Backdrop/Center
+@onready var snap_toggle: CheckButton = $Backdrop/Center/SettingsPanel/Rows/HUDSnapRow/SnapToggle
+@onready var show_grid_toggle: CheckButton = $Backdrop/Center/SettingsPanel/Rows/HUDSnapRow/ShowGridToggle
 
 
 func _ready() -> void:
@@ -25,6 +27,8 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if Settings.ui_edit_mode:
+		return
 	if event.is_action_pressed("pause"):
 		if visible:
 			if settings_panel.visible:
@@ -101,6 +105,8 @@ func _refresh_settings_state() -> void:
 	dialog_slow_btn.button_pressed   = (d == 12.0)
 	ui_scale_slider.value = Settings.ui_scale
 	ui_scale_label.text = "%.2fx" % Settings.ui_scale
+	snap_toggle.button_pressed = Settings.ui_snap_enabled
+	show_grid_toggle.button_pressed = Settings.ui_show_grid
 
 
 func _on_mouse_turn_pressed() -> void:
@@ -138,6 +144,32 @@ func _on_ui_scale_changed(value: float) -> void:
 	Settings.save()
 	ui_scale_label.text = "%.2fx" % value
 	_apply_ui_scale(value)
+
+
+func _on_edit_hud_pressed() -> void:
+	visible = false
+	var hud: Node = get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("set_ui_edit_mode"):
+		hud.set_ui_edit_mode(true)
+
+
+func _on_snap_toggled(pressed: bool) -> void:
+	Settings.ui_snap_enabled = pressed
+	Settings.save()
+
+
+func _on_show_grid_toggled(pressed: bool) -> void:
+	Settings.ui_show_grid = pressed
+	Settings.save()
+	var hud: Node = get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("update_grid_visibility"):
+		hud.update_grid_visibility()
+
+
+func _on_reset_hud_pressed() -> void:
+	var hud: Node = get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("reset_hud_layout"):
+		hud.reset_hud_layout()
 
 
 func _on_back_pressed() -> void:

@@ -137,6 +137,32 @@ custom_minimum_size = Vector2(48, 0)
 text = "1.00x"
 horizontal_alignment = 2
 
+[node name="HUDTitle" type="Label" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+text = "HUD Layout"
+
+[node name="EditHUDButton" type="Button" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+text = "Edit HUD Layout"
+
+[node name="HUDSnapRow" type="HBoxContainer" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+
+[node name="SnapToggle" type="CheckButton" parent="Backdrop/Center/SettingsPanel/Rows/HUDSnapRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+button_pressed = true
+text = "Snap to Grid"
+
+[node name="ShowGridToggle" type="CheckButton" parent="Backdrop/Center/SettingsPanel/Rows/HUDSnapRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Show Grid"
+
+[node name="ResetHUDButton" type="Button" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+text = "Reset HUD Layout"
+
 [node name="BackButton" type="Button" parent="Backdrop/Center/SettingsPanel/Rows"]
 layout_mode = 2
 text = "Back"
@@ -154,4 +180,8 @@ text = "Back"
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogNormalButton" to="." method="_on_dialog_normal_pressed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogSlowButton" to="." method="_on_dialog_slow_pressed"]
 [connection signal="value_changed" from="Backdrop/Center/SettingsPanel/Rows/UIScaleRow/UIScaleSlider" to="." method="_on_ui_scale_changed"]
+[connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/EditHUDButton" to="." method="_on_edit_hud_pressed"]
+[connection signal="toggled" from="Backdrop/Center/SettingsPanel/Rows/HUDSnapRow/SnapToggle" to="." method="_on_snap_toggled"]
+[connection signal="toggled" from="Backdrop/Center/SettingsPanel/Rows/HUDSnapRow/ShowGridToggle" to="." method="_on_show_grid_toggled"]
+[connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/ResetHUDButton" to="." method="_on_reset_hud_pressed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/BackButton" to="." method="_on_back_pressed"]

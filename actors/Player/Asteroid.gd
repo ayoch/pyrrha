@@ -29,6 +29,10 @@ var has_impact_fate: bool = false
 # Set by AsteroidManager when this rock's death was an Earth impact; tells
 # the death handler to skip dust + fragmentation (the rock is gone, not broken).
 var died_to_earth: bool = false
+# True for rocks intentionally aimed at Earth by the threat system. Nuisance
+# rocks that happen to drift toward Earth do NOT get this flag — it is only set
+# by AsteroidManager._spawn_threat_rock so the threat cap counts correctly.
+var is_threat: bool = false
 
 # Mass proxy by size. Roughly scale² so it tracks volume in our 2D world.
 # Read by the player's collision handler for kinetic damage + plow-through.
@@ -78,6 +82,7 @@ func reset(p_species: String, p_size: int, p_is_fragment: bool,
 	impact_deaths = 0
 	has_impact_fate = false
 	died_to_earth = false
+	is_threat = false
 	# Collision layout: fragments only collide with the player; whole rocks
 	# Whole rocks and fragments both collide only with the player.
 	# Whole-on-whole collision is O(n²) in clump size with no gameplay response.

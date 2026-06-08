@@ -1,6 +1,39 @@
 # Claude Code Handoff Document
 **Last Updated:** 2026-06-08
-**Updated By:** Opus 4.7 (Dweezil, Windows)
+**Updated By:** Sonnet 4.6
+
+---
+
+## SESSION — 2026-06-08 (Sonnet 4.6) — Difficulty ramp, HUD edit mode, fragment bounce, misc
+
+### Threat ramp system (Asteroid_Manager.gd + Asteroid.gd)
+Core design: Earth-aimed threat rocks are tightly capped per stage and fire as full volleys. Nuisance rocks are just obstacles — they do not count against the cap.
+
+- **`max_threats` per stage** (2→3→4→5→6→7): the maximum number of `is_threat`-tagged rocks that may be in flight simultaneously. Live in `STAGES` alongside duration/boss/credits.
+- **`sleeper_chance` per stage** (0→0→0→0.05→0.15→0.25): placeholder for future Type 1 sleeper rock spawn probability. Scales independently of the Earth-threat cap; sleepers are harassment, not threats.
+- **`is_threat` flag on `Asteroid`**: set by `_spawn_threat_rock`, cleared on `reset()`. Only rocks with this flag count toward `max_threats`. Nuisance rocks that drift toward Earth are ignored by the cap — they still impact Earth and kill people, they just don't gate the volley timing.
+- **Volley rhythm**: all threat rocks (scheduled + boss pattern) now go into `_threat_backlog` instead of spawning directly. `_drain_threat_backlog()` holds until `_count_earth_threats() == 0`, then fires up to `max_threats` at once. Creates a clear wave rhythm: player clears the field → pause → volley → repeat.
+- **Boss patterns resized**: clump counts shrunk to match stage caps (`clump_6→clump_4` for stage 3, etc.). A clump larger than the cap would just spill into a second volley automatically.
+- **`_count_earth_threats()`** is now a simple `is_threat` tag scan — no proximity math. Fast, accurate, immune to nuisance rock drift.
+- **Respite gate** waits for both `_threat_backlog` AND `_spawn_queue` to drain before starting the clear timer. Prevents race condition where boss rocks queued but not yet spawned would let the stage end immediately.
+
+### HUD edit mode (UI/GUI.gd, UI/GUI.tscn, UI/PauseMenu.gd/.tscn, globals/Settings.gd)
+Full Farwend-style drag/resize system for HUD panels.
+- StatsPanel (health/shield/energy bars) and MinimapPanel are free-floating CanvasLayer children at absolute positions, registered as editable panels.
+- Edit mode pauses the game (`get_tree().paused = true`); exiting unpauses. GUI has `PROCESS_MODE_ALWAYS` so it keeps running while paused.
+- Corner handles, dimension labels, snap-to-grid, show-grid toggle, reset-to-default — all ported from Farwend.
+- Layout saved/restored via `Settings.hud_layout` (normalized `v:3` format).
+- Minimap syncs `display_radius_px` and `_conversion` to its panel size every frame so it scales with the panel.
+- PauseMenu Settings panel gained: Edit HUD Layout button, Snap to Grid toggle, Show Grid toggle, Reset HUD Layout button.
+- `Settings.gd` gained: `ui_edit_mode`, `ui_snap_enabled`, `ui_snap_size`, `ui_show_grid`, `hud_layout` — saved under `[hud]` config section.
+
+### Fragment shield bounce (actors/Player/Player.gd)
+Size-1 rocks hitting an active shield have a 60% chance to bounce off instead of being pulverized. Applies between the soft-bounce and hard-impact paths in `_resolve_slide_collisions`.
+
+### Pending: Sleeper rocks
+Two types designed but not yet implemented:
+- **Type 1 (Dive)**: looks like a normal rock; activates on player proximity, beam near-miss, attack, or random chance. Tries to physically collide with the player. Does NOT count against `max_threats`. Spawn probability governed by `sleeper_chance` in STAGES.
+- **Type 2 (Sleeper threat)**: activates after a random timer; aims for Earth. DOES count against `max_threats`. Both types require a PID controller for Newtonian navigation once activated.
 
 ---
 

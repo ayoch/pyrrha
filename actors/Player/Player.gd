@@ -485,6 +485,15 @@ func _resolve_slide_collisions(pre_move_vel: Vector2) -> void:
 				_spawn_ripple(contact, normal)
 			continue
 
+		# Small fragments (size 1) have a chance to deflect off an active shield
+		# instead of being pulverized — shield takes a small hit, rock bounces away.
+		if shield > 0 and "size" in other and other.size == 1 and randf() < 0.6:
+			velocity = velocity.bounce(normal)
+			other.asteroid_velocity = other.asteroid_velocity.bounce(-normal) * randf_range(0.8, 1.2)
+			_apply_shield_hit(closing, contact, normal)
+			_spawn_ripple(contact, normal)
+			continue
+
 		# Shock burst at the contact point — quick visual cue that something hit you.
 		_spawn_shock(contact)
 

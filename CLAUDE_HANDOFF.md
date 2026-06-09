@@ -1,6 +1,58 @@
 # Claude Code Handoff Document
-**Last Updated:** 2026-06-08
+**Last Updated:** 2026-06-09
 **Updated By:** Opus 4.7 (Dweezil)
+
+---
+
+## SESSION — 2026-06-09 (Opus 4.7, Dweezil) — Diagnostics, sleepers, stage-end gating, polish
+
+Built on top of HK's heavy additions (economy / station shop / settings autoload / sleeper scaffolding / volley rhythm).
+
+### Stage-end "magical message" bug — three causes fixed
+The "Respite" message kept firing while collision-course rocks were still inbound. All three contributing causes addressed:
+- `_any_rocks_threatening_earth()` now counts every rock with `has_impact_fate`, not just `is_threat` rocks. Random nuisance spawns that happen to be aimed at Earth now block respite the same as deliberate threats.
+- Regular `_on_Asteroid_Spawn_Timer_timeout` halts the moment `_boss_started == true`. Was leaking new collision-course rocks during the boss + clear-wait window.
+- `WHOLE_CLEAR_TIMEOUT` fallback (25s) removed entirely. Respite now waits strictly until the field is clear — the player is responsible for shooting down nuisance threats too.
+
+### Casualty Report (Pause menu)
+Every Earth impact appends to `Asteroid_Manager._casualty_log` (capped 500): `{time_ms, size, pos, deaths, is_threat, is_sleeper, species, stage}`. Pause menu has a new **Casualty Report** button → panel with:
+- Summary line: total impacts, total deaths, per-size breakdown with hit counts
+- Detailed BBCode table (newest first): Time-ago / Size / Type / Stage / Location / Deaths
+- Type tags: `threat` / `nuisance` / `debris` / `sleeper`
+- Deaths colored by severity (≥1M red, ≥100k orange, ≥10k yellow, 0 gray)
+
+Built specifically to debug "magical deaths" — the user wanted forensic visibility into what's contributing to the score.
+
+### Killer report (DeathScreen)
+On lethal collision, `Player._resolve_slide_collisions` builds a multi-line dump of the killer rock: species, size, mass, is_threat, root + sprite visibility, texture path, modulate, z_index, scale, position, velocity, layer/mask, impact-fate state, closing speed, raw damage. Stored on `GlobalSignals.last_killer_info`, printed to console, appended to the DeathScreen report. Diagnoses "invisible asteroid killed me" bugs.
+
+### Sleeper rocks (Type 1 dive) — actually implemented
+HK had `sleeper_chance` in STAGES but no implementation. Now:
+- `Asteroid.is_sleeper` / `sleeper_active`. Inactive sleepers are stationary with `SLEEPER_TINT = Color(0.55, 0.18, 0.18)` (dark red). Activate when player closes within `SLEEPER_ACTIVATE_RADIUS = 2200`, then accelerate at `SLEEPER_CHASE_ACCEL = 600 u/s²` toward player (no max speed).
+- `_spawn_sleeper()` in Asteroid_Manager: places one ~2800u from player (just outside wake radius so player can see it).
+- Stage 1 is hard-coded to spawn one at t=5s so the user actually encounters them. Later stages still use `sleeper_chance` to roll random spawns mid-stage.
+- Sleepers don't have `is_threat`, don't count against `max_threats`, don't appear on the minimap as Earth threats (they target the player).
+
+### Defense turret toggle + indicator
+- New `turret_toggle` input bound to **R**.
+- `DefenseLaserTurret.enabled` flag; `toggle()` flips it. When disabled: no targeting, no firing, beam cleared.
+- Persistent **triangle indicator** rendered at the turret position on the ship — green when ON, red when OFF. Always visible (separate from the firing-beam flash).
+- New `turret_state_changed(enabled: bool)` signal.
+- Independent **TURRET: ON/OFF** label in the GUI, top-right corner, color-tracked. Does NOT use `status_message` (that channel belongs to stage text only — user explicitly didn't want them mixed).
+
+### Polish
+- **Beam brightness**: width 8, modulate 2.4× white on top of HK's additive blend material.
+- **Flame brightness**: warm modulate boost (1.9R 1.5G 1.0B) on additive.
+- **Dust starts tiny universally**: `start_scale_max` 0.20 → 0.08. "Mega" clouds are mega only because of long lifetime + fast expansion, not because they spawn big. The user explicitly called out that big-from-spawn defeated the point of the system.
+
+### Behavioral note: rock dies at the impact point
+`_on_earth_impact` snaps `asteroid.global_position = asteroid.impact_point` before triggering the explosion and integrity = -1. The rock no longer overshoots; explosion + disappearance occur at the precomputed impact point.
+
+### Known follow-ups still open
+- **Real 3D explosion model** for `ExplosionPlaceholder.tscn` (placeholder is still a glowing sphere).
+- **Population-density texture** to replace the Earth-texture land/ocean heuristic if precision is wanted.
+- **Code review punch list** from previous session (cull double-return-to-pool, name-collision damage signal, SaveSystem field mismatch) — still standing.
+- **Type 2 sleeper** (long-fuse timer activation that aims at Earth, counts against `max_threats`) — not built; only Type 1 dive is in.
 
 ---
 

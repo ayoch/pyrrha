@@ -235,7 +235,7 @@ const SIZE_DEATH_SCALE := {
 const MIN_DEATHS_FOR_SIZE := {
 	4: 50_000,
 	3: 5_000,
-	2: 500,
+	2: 2_500,
 	1: 0,
 }
 const EARTH_IMPACT_TOLERANCE := 50.0   # world units; impact triggers within this of impact_point

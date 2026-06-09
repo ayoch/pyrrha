@@ -96,7 +96,7 @@ const FRAGMENT_DEFLECT_CHANCE := 0.4
 # death_mult     : lethality on Earth impact (denser = more penetrating)
 # frag_max       : upper bound on FRAGMENT_MULTIPLIER_MAX for this type
 const SPECIES_PROPS := {
-	"C": {"integrity_mult": 0.6, "mass_mult": 0.8, "death_mult": 0.7, "frag_max": 12},
+	"C": {"integrity_mult": 0.6, "mass_mult": 0.8, "death_mult": 0.7, "frag_max": 20},
 	"S": {"integrity_mult": 1.0, "mass_mult": 1.0, "death_mult": 1.0, "frag_max": 8},
 	"M": {"integrity_mult": 1.6, "mass_mult": 1.5, "death_mult": 1.5, "frag_max": 4},
 }
@@ -588,14 +588,15 @@ func _fragment(parent_rock) -> void:
 	var recipe: Array = _break_recipes.get(parent_rock.species, [])
 	var props: Dictionary = _props(parent_rock.species)
 	var total_spawned: int = 0
+	var frag_cap: int = props.frag_max
 	for spec in recipe:
-		if total_spawned >= MAX_FRAGMENTS_PER_BREAK:
+		if total_spawned >= frag_cap:
 			break
 		var size: int = spec.size
 		var poly: PackedVector2Array = _polygon_for_texture.get(spec.texture, PackedVector2Array())
 		var sprite_scale: float = SIZE_SCALES.get(size, 0.25)
 		var count: int = _rng.randi_range(FRAGMENT_MULTIPLIER_MIN, props.frag_max)
-		count = min(count, MAX_FRAGMENTS_PER_BREAK - total_spawned)
+		count = min(count, frag_cap - total_spawned)
 		for k in count:
 			var frag := _take_from_pool()
 			var pos: Vector2 = parent_rock.position + Vector2(

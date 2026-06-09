@@ -586,6 +586,7 @@ func _fragment(parent_rock) -> void:
 			var rot_rate: float = parent_rock.rotation_rate + _rng.randf_range(-_rotation_jitter(size), _rotation_jitter(size))
 			frag.reset(parent_rock.species, size, true, spec.texture, poly, sprite_scale,
 					   pos, vel, rot_rate, _integrity_for_size(size))
+			frag.is_threat = parent_rock.is_threat
 			_spawn_queue.append(frag)
 			total_spawned += 1
 

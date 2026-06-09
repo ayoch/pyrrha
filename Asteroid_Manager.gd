@@ -90,6 +90,17 @@ const MAX_FRAGMENTS_PER_BREAK := 12
 # the breakup — those fragments become harmless nuisance debris.
 const FRAGMENT_DEFLECT_CHANCE := 0.4
 
+# Per-type physical properties keyed by first character of species code (C/S/M).
+# integrity_mult : toughness relative to baseline 100
+# mass_mult      : density — affects kinetic damage to player and impact deaths
+# death_mult     : lethality on Earth impact (denser = more penetrating)
+# frag_max       : upper bound on FRAGMENT_MULTIPLIER_MAX for this type
+const SPECIES_PROPS := {
+	"C": {"integrity_mult": 0.6, "mass_mult": 0.8, "death_mult": 0.7, "frag_max": 12},
+	"S": {"integrity_mult": 1.0, "mass_mult": 1.0, "death_mult": 1.0, "frag_max": 8},
+	"M": {"integrity_mult": 1.6, "mass_mult": 1.5, "death_mult": 1.5, "frag_max": 4},
+}
+
 # Fragment collision polygon vertex count (cheap convex octagon).
 const FRAGMENT_HULL_SIDES := 8
 
@@ -321,7 +332,7 @@ func _check_earth_impacts() -> void:
 				var ip = _compute_random_impact_point(c.global_position, c.asteroid_velocity, earth_pos, earth_radius)
 				if ip != null:
 					c.impact_point = ip
-					c.impact_deaths = _sample_deaths(ip, c.size)
+					c.impact_deaths = _sample_deaths(ip, c.size, c.species)
 					c.has_impact_fate = true
 		# If fate is assigned, trigger impact when the rock reaches or passes
 		# its impact point. We check both proximity (slow rocks) and "have we
@@ -417,7 +428,7 @@ func _build_population_data() -> void:
 		_earth_image_scale = abs(earth.scale.x)
 
 
-func _sample_deaths(impact_world_pos: Vector2, size: int) -> int:
+func _sample_deaths(impact_world_pos: Vector2, size: int, species: String = "S11") -> int:
 	var min_deaths: int = MIN_DEATHS_FOR_SIZE.get(size, 0)
 	if _earth_image == null:
 		return min_deaths
@@ -440,7 +451,8 @@ func _sample_deaths(impact_world_pos: Vector2, size: int) -> int:
 	# Noise gives density variation within land.
 	var noise_val: float = _density_noise.get_noise_2dv(px) * 0.5 + 0.5
 	var size_mult: float = float(SIZE_DEATH_SCALE.get(size, 0.0))
-	return max(int(land_factor * noise_val * MAX_DEATHS_PER_IMPACT * size_mult), min_deaths)
+	var death_mult: float = float(_props(species).death_mult)
+	return max(int(land_factor * noise_val * MAX_DEATHS_PER_IMPACT * size_mult * death_mult), min_deaths)
 
 
 func _node_visual_radius(n) -> float:
@@ -520,8 +532,10 @@ func _queue_whole_asteroid(species: String) -> void:
 				vel_dir = Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
 	var vel := vel_dir * _rng.randf_range(1, 1000)
 	var rot_rate := _rng.randf_range(-0.2, 0.2)
+	var props: Dictionary = _props(species)
 	rock.reset(species, SIZE_WHOLE, false, tex, _polygon_for_texture.get(tex, PackedVector2Array()),
-			   SIZE_SCALES[SIZE_WHOLE], pos, vel, rot_rate, 100)
+			   SIZE_SCALES[SIZE_WHOLE], pos, vel, rot_rate, int(100 * props.integrity_mult))
+	rock.mass *= props.mass_mult
 	_spawn_queue.append(rock)
 
 
@@ -537,6 +551,10 @@ func _random_species() -> String:
 
 func _whole_texture(species: String) -> Texture2D:
 	return WHOLE_TEXTURES.get(species, WHOLE_TEXTURES["C11"])
+
+
+func _props(species: String) -> Dictionary:
+	return SPECIES_PROPS.get(species.left(1), SPECIES_PROPS["S"])
 
 
 # ----------------------------------------------------------------------
@@ -568,6 +586,7 @@ func _on_asteroid_died(asteroid) -> void:
 
 func _fragment(parent_rock) -> void:
 	var recipe: Array = _break_recipes.get(parent_rock.species, [])
+	var props: Dictionary = _props(parent_rock.species)
 	var total_spawned: int = 0
 	for spec in recipe:
 		if total_spawned >= MAX_FRAGMENTS_PER_BREAK:
@@ -575,7 +594,7 @@ func _fragment(parent_rock) -> void:
 		var size: int = spec.size
 		var poly: PackedVector2Array = _polygon_for_texture.get(spec.texture, PackedVector2Array())
 		var sprite_scale: float = SIZE_SCALES.get(size, 0.25)
-		var count: int = _rng.randi_range(FRAGMENT_MULTIPLIER_MIN, FRAGMENT_MULTIPLIER_MAX)
+		var count: int = _rng.randi_range(FRAGMENT_MULTIPLIER_MIN, props.frag_max)
 		count = min(count, MAX_FRAGMENTS_PER_BREAK - total_spawned)
 		for k in count:
 			var frag := _take_from_pool()
@@ -588,7 +607,8 @@ func _fragment(parent_rock) -> void:
 				_rng.randf_range(-vj, vj))
 			var rot_rate: float = parent_rock.rotation_rate + _rng.randf_range(-_rotation_jitter(size), _rotation_jitter(size))
 			frag.reset(parent_rock.species, size, true, spec.texture, poly, sprite_scale,
-					   pos, vel, rot_rate, _integrity_for_size(size))
+					   pos, vel, rot_rate, int(_integrity_for_size(size) * props.integrity_mult))
+			frag.mass *= props.mass_mult
 			frag.is_threat = parent_rock.is_threat and _rng.randf() >= FRAGMENT_DEFLECT_CHANCE
 			_spawn_queue.append(frag)
 			total_spawned += 1
@@ -1050,10 +1070,12 @@ func _spawn_threat_rock(velocity_mult: float = 1.0, position_override: Variant =
 	var rock := _take_from_pool()
 	var species := _random_species()
 	var tex: Texture2D = _whole_texture(species)
+	var props: Dictionary = _props(species)
 	rock.reset(species, size, false, tex,
 			   _polygon_for_texture.get(tex, PackedVector2Array()),
 			   SIZE_SCALES[size], spawn_pos, vel,
-			   _rng.randf_range(-0.2, 0.2), 100)
+			   _rng.randf_range(-0.2, 0.2), int(100 * props.integrity_mult))
+	rock.mass *= props.mass_mult
 	rock.is_threat = true
 	_spawn_queue.append(rock)
 

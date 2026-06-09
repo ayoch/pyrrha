@@ -134,12 +134,66 @@ const DUST_COUNT_BY_SIZE := {4: 80, 3: 40, 2: 20, 1: 8}
 enum Phase { ACTIVE, RESPITE, WON, DEAD }
 
 const STAGES := [
-	{"duration": 45.0, "threats": 1, "boss": "fastball",              "base_credits": 200, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
-	{"duration": 60.0, "threats": 2, "boss": "double_fastball",       "base_credits": 275, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.03},
-	{"duration": 75.0, "threats": 3, "boss": "clump_4",               "base_credits": 375, "max_threats": 4, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.05, "off_radar_chance": 0.05},
-	{"duration": 90.0, "threats": 4, "boss": "clump_4_plus_fastball", "base_credits": 475, "max_threats": 5, "sleeper_chance": 0.05, "sleeper2_chance": 0.03, "blocker_chance": 0.08, "off_radar_chance": 0.07},
-	{"duration": 90.0, "threats": 5, "boss": "split_volley",          "base_credits": 600, "max_threats": 6, "sleeper_chance": 0.15, "sleeper2_chance": 0.07, "blocker_chance": 0.12, "off_radar_chance": 0.10},
-	{"duration": 90.0, "threats": 6, "boss": "finale",                "base_credits": 725, "max_threats": 7, "sleeper_chance": 0.25, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.14},
+	# 1  — intro; one scheduled threat, simple fastball boss
+	{"duration": 45.0,  "threats":  1, "boss": "fastball",            "base_credits": 150, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
+	# 2  — settle in; same shape, nothing new
+	{"duration": 50.0,  "threats":  1, "boss": "fastball",            "base_credits": 175, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
+	# 3  — threats: 2; boss: double_fastball
+	{"duration": 50.0,  "threats":  2, "boss": "double_fastball",     "base_credits": 200, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
+	# 4  — new: off-radar rocks (don't show on minimap)
+	{"duration": 55.0,  "threats":  2, "boss": "double_fastball",     "base_credits": 220, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.03},
+	# 5  — max_threats: 3 (first multi-rock volley)
+	{"duration": 55.0,  "threats":  2, "boss": "double_fastball",     "base_credits": 240, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.04},
+	# 6  — threats: 3
+	{"duration": 60.0,  "threats":  3, "boss": "double_fastball",     "base_credits": 260, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.05},
+	# 7  — new: clump boss (random formation: cluster / line / semicircle)
+	{"duration": 60.0,  "threats":  3, "boss": "clump_4",             "base_credits": 280, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.06},
+	# 8  — new: blocker rocks (interpose between player and threats)
+	{"duration": 65.0,  "threats":  3, "boss": "clump_4",             "base_credits": 300, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.05, "off_radar_chance": 0.06},
+	# 9  — threats: 4
+	{"duration": 65.0,  "threats":  4, "boss": "clump_4",             "base_credits": 325, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.06, "off_radar_chance": 0.07},
+	# 10 — max_threats: 4
+	{"duration": 70.0,  "threats":  4, "boss": "clump_4",             "base_credits": 350, "max_threats": 4, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.07, "off_radar_chance": 0.07},
+	# 11 — new: Type-1 sleeper rocks (dormant; wake and chase the player)
+	{"duration": 70.0,  "threats":  4, "boss": "clump_4_plus_fastball","base_credits": 375, "max_threats": 4, "sleeper_chance": 0.25, "sleeper2_chance": 0.00, "blocker_chance": 0.07, "off_radar_chance": 0.08},
+	# 12 — threats: 5
+	{"duration": 75.0,  "threats":  5, "boss": "clump_4",             "base_credits": 400, "max_threats": 4, "sleeper_chance": 0.35, "sleeper2_chance": 0.00, "blocker_chance": 0.08, "off_radar_chance": 0.08},
+	# 13 — boss steps up to clump + trailing fastball
+	{"duration": 75.0,  "threats":  5, "boss": "clump_4_plus_fastball","base_credits": 425, "max_threats": 4, "sleeper_chance": 0.45, "sleeper2_chance": 0.00, "blocker_chance": 0.09, "off_radar_chance": 0.09},
+	# 14 — max_threats: 5
+	{"duration": 80.0,  "threats":  5, "boss": "clump_4_plus_fastball","base_credits": 450, "max_threats": 5, "sleeper_chance": 0.50, "sleeper2_chance": 0.00, "blocker_chance": 0.09, "off_radar_chance": 0.09},
+	# 15 — new: split-volley boss (simultaneous volleys from opposite sides)
+	{"duration": 80.0,  "threats":  6, "boss": "split_volley",        "base_credits": 475, "max_threats": 5, "sleeper_chance": 0.55, "sleeper2_chance": 0.00, "blocker_chance": 0.10, "off_radar_chance": 0.10},
+	# 16 — new: Type-2 sleeper rocks (fuse timer; wake and aim at Earth)
+	{"duration": 85.0,  "threats":  6, "boss": "split_volley",        "base_credits": 500, "max_threats": 5, "sleeper_chance": 0.60, "sleeper2_chance": 0.03, "blocker_chance": 0.10, "off_radar_chance": 0.10},
+	# 17 — max_threats: 6
+	{"duration": 85.0,  "threats":  6, "boss": "split_volley",        "base_credits": 525, "max_threats": 6, "sleeper_chance": 0.65, "sleeper2_chance": 0.04, "blocker_chance": 0.11, "off_radar_chance": 0.11},
+	# 18 — new: clump-6 boss; threats: 7
+	{"duration": 90.0,  "threats":  7, "boss": "clump_6",             "base_credits": 550, "max_threats": 6, "sleeper_chance": 0.70, "sleeper2_chance": 0.05, "blocker_chance": 0.11, "off_radar_chance": 0.11},
+	# 19 — alternating between heavy bosses
+	{"duration": 90.0,  "threats":  7, "boss": "split_volley",        "base_credits": 575, "max_threats": 6, "sleeper_chance": 0.70, "sleeper2_chance": 0.06, "blocker_chance": 0.12, "off_radar_chance": 0.12},
+	# 20 — new: finale boss (clump-6 + fastball); threats: 8
+	{"duration": 90.0,  "threats":  8, "boss": "finale",              "base_credits": 600, "max_threats": 6, "sleeper_chance": 0.75, "sleeper2_chance": 0.07, "blocker_chance": 0.12, "off_radar_chance": 0.12},
+	# 21 — max_threats: 7
+	{"duration": 95.0,  "threats":  8, "boss": "clump_6",             "base_credits": 625, "max_threats": 7, "sleeper_chance": 0.75, "sleeper2_chance": 0.07, "blocker_chance": 0.13, "off_radar_chance": 0.12},
+	# 22 — threats: 9
+	{"duration": 95.0,  "threats":  9, "boss": "split_volley",        "base_credits": 650, "max_threats": 7, "sleeper_chance": 0.80, "sleeper2_chance": 0.08, "blocker_chance": 0.13, "off_radar_chance": 0.13},
+	# 23 — sustained pressure
+	{"duration": 100.0, "threats":  9, "boss": "finale",              "base_credits": 675, "max_threats": 7, "sleeper_chance": 0.80, "sleeper2_chance": 0.09, "blocker_chance": 0.14, "off_radar_chance": 0.13},
+	# 24 — threats: 10
+	{"duration": 100.0, "threats": 10, "boss": "clump_6",             "base_credits": 700, "max_threats": 7, "sleeper_chance": 0.80, "sleeper2_chance": 0.09, "blocker_chance": 0.14, "off_radar_chance": 0.14},
+	# 25 — max_threats: 8
+	{"duration": 100.0, "threats": 10, "boss": "finale",              "base_credits": 725, "max_threats": 8, "sleeper_chance": 0.85, "sleeper2_chance": 0.10, "blocker_chance": 0.15, "off_radar_chance": 0.14},
+	# 26 — threats: 11
+	{"duration": 105.0, "threats": 11, "boss": "split_volley",        "base_credits": 750, "max_threats": 8, "sleeper_chance": 0.85, "sleeper2_chance": 0.11, "blocker_chance": 0.15, "off_radar_chance": 0.14},
+	# 27 — high, sustained pressure
+	{"duration": 105.0, "threats": 11, "boss": "finale",              "base_credits": 775, "max_threats": 8, "sleeper_chance": 0.85, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
+	# 28 — threats: 12
+	{"duration": 110.0, "threats": 12, "boss": "clump_6",             "base_credits": 800, "max_threats": 8, "sleeper_chance": 0.90, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
+	# 29 — threats: 13; max_threats: 9
+	{"duration": 110.0, "threats": 13, "boss": "split_volley",        "base_credits": 825, "max_threats": 9, "sleeper_chance": 0.90, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
+	# 30 — final stage
+	{"duration": 120.0, "threats": 14, "boss": "finale",              "base_credits": 900, "max_threats": 9, "sleeper_chance": 0.90, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
 ]
 
 # Credits awarded = base_credits * pct, where pct is determined by how many

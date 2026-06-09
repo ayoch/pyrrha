@@ -406,7 +406,9 @@ func _fire_beam(beam: Line2D, ray: RayCast2D) -> void:
 		var collider = ray.get_collider()
 		var hit_point: Vector2 = ray.get_collision_point()
 		if collider and "type" in collider and collider.type == "asteroid":
-			var dmg: int = max(1, int(mining_damage_per_tick * energy_frac))
+			var dist: float = ray.global_position.distance_to(hit_point)
+			var range_falloff: float = clamp(1.0 - dist / 2000.0, 0.3, 1.0)
+			var dmg: int = max(1, int(mining_damage_per_tick * energy_frac * range_falloff))
 			GlobalSignals.emit_signal("player_hit_asteroid", collider.name, dmg)
 			if randf() < laser_spark_chance:
 				_spawn_shock(hit_point)

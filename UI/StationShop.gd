@@ -80,6 +80,9 @@ func _on_open() -> void:
 func _on_depart() -> void:
 	visible = false
 	get_tree().paused = false
+	var player: Player = _get_player()
+	if player != null:
+		player.velocity = Vector2.ZERO
 	GlobalSignals.emit_signal("station_shop_departed")
 
 

@@ -509,7 +509,8 @@ func _sample_deaths(impact_world_pos: Vector2, size: int, species: String = "S11
 	var noise_val: float = _density_noise.get_noise_2dv(px) * 0.5 + 0.5
 	var size_mult: float = float(SIZE_DEATH_SCALE.get(size, 0.0))
 	var death_mult: float = float(_props(species).death_mult)
-	return max(int(land_factor * noise_val * MAX_DEATHS_PER_IMPACT * size_mult * death_mult), min_deaths)
+	var jitter: float = _rng.randf_range(0.65, 1.45)
+	return max(int(land_factor * noise_val * MAX_DEATHS_PER_IMPACT * size_mult * death_mult * jitter), min_deaths)
 
 
 func _node_visual_radius(n) -> float:

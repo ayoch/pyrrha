@@ -1,6 +1,23 @@
 # Claude Code Handoff Document
 **Last Updated:** 2026-06-09
-**Updated By:** Opus 4.7 (Dweezil)
+**Updated By:** Sonnet 4.6
+
+---
+
+## DESIGN BACKLOG — Difficulty mechanics
+
+Implemented:
+- **Threat rock volley system** — capped concurrent threats per stage (2→7), holds until field clear then fires full volley at once
+- **Asteroid type differentiation** — C (fragile, many frags), S (baseline), M (tough, dense, lethal, few frags)
+- **Sleeper rocks (Type 1 dive)** — proximity/random/attack-triggered, homes on player, not counted against threat cap
+- **Boss patterns** — fastball, clump, layered clump, finale; scale with stage cap
+- **sleeper_chance per stage** — independent of threat cap, ramps from stage 4 onward
+
+Designed, not yet built:
+- **Timing pressure** — two volleys inbound simultaneously from opposite sides of the map; player can only be in one place
+- **Player-targeting rock** — rock that specifically tries to stay between the player and an incoming threat; not aggressive, just obstructive
+- **Off-radar rock** — a type that doesn't appear on the minimap; player has to visually spot it in the field; attacks the toolset rather than just health
+- **Type 2 sleeper** — long-fuse timer activation, aims at Earth, counts against max_threats (companion to existing Type 1 dive)
 
 ---
 

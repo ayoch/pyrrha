@@ -41,8 +41,23 @@ var is_threat: bool = false
 var is_sleeper: bool = false
 var sleeper_active: bool = false
 const SLEEPER_ACTIVATE_RADIUS := 2200.0
-const SLEEPER_CHASE_ACCEL := 600.0   # units/sec^2 once activated
+const SLEEPER_CHASE_ACCEL := 600.0
 const SLEEPER_TINT := Color(0.55, 0.18, 0.18, 1.0)
+const SLEEPER_RANDOM_ACTIVATE_CHANCE := 0.002  # per second, spontaneous activation
+
+# Type 2 sleeper: counts down a fuse, then steers toward Earth and becomes a threat.
+var sleeper_target_earth: bool = false
+var sleeper_fuse: float = 0.0
+const SLEEPER2_ACCEL := 500.0
+
+# Blocker: positions itself between the player and the nearest threat rock.
+var is_blocker: bool = false
+const BLOCKER_P_GAIN := 0.5
+const BLOCKER_D_GAIN := 2.0
+const BLOCKER_MAX_SPEED := 500.0
+
+# Off-radar: invisible to the minimap; must be spotted visually.
+var is_off_radar: bool = false
 
 # Mass proxy by size. Roughly scale² so it tracks volume in our 2D world.
 # Read by the player's collision handler for kinetic damage + plow-through.
@@ -95,7 +110,11 @@ func reset(p_species: String, p_size: int, p_is_fragment: bool,
 	is_threat = false
 	is_sleeper = false
 	sleeper_active = false
-	modulate = Color.WHITE   # reset tint in case last cycle was a sleeper
+	sleeper_target_earth = false
+	sleeper_fuse = 0.0
+	is_blocker = false
+	is_off_radar = false
+	modulate = Color.WHITE
 	# Collision layout: fragments only collide with the player; whole rocks
 	# Whole rocks and fragments both collide only with the player.
 	# Whole-on-whole collision is O(n²) in clump size with no gameplay response.
@@ -140,29 +159,76 @@ func _physics_process(delta: float) -> void:
 		return
 	if is_sleeper:
 		_tick_sleeper(delta)
+	if is_blocker:
+		_tick_blocker(delta)
 	set_velocity(asteroid_velocity)
 	move_and_slide()
 	rotation += rotation_rate
 
 
 func _tick_sleeper(delta: float) -> void:
+	if sleeper_target_earth:
+		_tick_sleeper_type2(delta)
+		return
 	var player = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return
 	if not sleeper_active:
 		var dist: float = global_position.distance_to(player.global_position)
-		if dist <= SLEEPER_ACTIVATE_RADIUS:
+		var spontaneous: bool = randf() < SLEEPER_RANDOM_ACTIVATE_CHANCE * delta
+		if dist <= SLEEPER_ACTIVATE_RADIUS or spontaneous:
 			sleeper_active = true
-			modulate = Color.WHITE   # drop the tint; ship is no longer sneaking
+			modulate = Color.WHITE
 		return
-	# Active sleeper: accelerate toward the player (no max speed cap).
 	var dir: Vector2 = (player.global_position - global_position).normalized()
 	asteroid_velocity += dir * SLEEPER_CHASE_ACCEL * delta
+
+
+func _tick_sleeper_type2(delta: float) -> void:
+	if not sleeper_active:
+		sleeper_fuse -= delta
+		if sleeper_fuse <= 0.0:
+			sleeper_active = true
+			is_threat = true
+		return
+	var earth: Node = get_tree().get_first_node_in_group("earth")
+	if earth == null:
+		return
+	var dir: Vector2 = ((earth as Node2D).global_position - global_position).normalized()
+	asteroid_velocity += dir * SLEEPER2_ACCEL * delta
+
+
+func _tick_blocker(delta: float) -> void:
+	var player: Node = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return
+	var nearest_threat: Node = null
+	var best_dist: float = INF
+	for ast in get_tree().get_nodes_in_group("asteroid"):
+		if ast == self:
+			continue
+		if "is_threat" in ast and ast.is_threat:
+			var d: float = global_position.distance_to((ast as Node2D).global_position)
+			if d < best_dist:
+				best_dist = d
+				nearest_threat = ast
+	if nearest_threat == null:
+		return
+	var target: Vector2 = (player as Node2D).global_position.lerp(
+			(nearest_threat as Node2D).global_position, 0.3)
+	var error: Vector2 = target - global_position
+	var accel: Vector2 = error * BLOCKER_P_GAIN - asteroid_velocity * BLOCKER_D_GAIN
+	asteroid_velocity += accel * delta
+	if asteroid_velocity.length() > BLOCKER_MAX_SPEED:
+		asteroid_velocity = asteroid_velocity.normalized() * BLOCKER_MAX_SPEED
 
 
 func _on_player_hit_asteroid(asteroid_name: String, damage: int) -> void:
 	if name == asteroid_name:
 		integrity -= damage
+		if is_sleeper and not sleeper_active and not sleeper_target_earth:
+			sleeper_active = true
+			modulate = Color.WHITE
 
 
 # Brief delay before physics collision engages, so a fresh fragment doesn't

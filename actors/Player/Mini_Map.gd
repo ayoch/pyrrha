@@ -139,6 +139,8 @@ func _refresh() -> void:
 	for ast in get_tree().get_nodes_in_group("asteroid"):
 		if "is_fragment" in ast and ast.is_fragment:
 			continue
+		if "is_off_radar" in ast and ast.is_off_radar:
+			continue
 		var local_pos: Vector2 = (ast.global_position - player_pos) * _conversion
 		var marker_in_range: bool = ast.global_position.distance_to(player_pos) <= detection_radius
 

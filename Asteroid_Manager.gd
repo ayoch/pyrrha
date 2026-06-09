@@ -134,12 +134,12 @@ const DUST_COUNT_BY_SIZE := {4: 80, 3: 40, 2: 20, 1: 8}
 enum Phase { ACTIVE, RESPITE, WON, DEAD }
 
 const STAGES := [
-	{"duration": 45.0, "threats": 1, "boss": "fastball",              "base_credits": 200, "max_threats": 2, "sleeper_chance": 0.00},
-	{"duration": 60.0, "threats": 2, "boss": "double_fastball",       "base_credits": 275, "max_threats": 3, "sleeper_chance": 0.00},
-	{"duration": 75.0, "threats": 3, "boss": "clump_4",               "base_credits": 375, "max_threats": 4, "sleeper_chance": 0.00},
-	{"duration": 90.0, "threats": 4, "boss": "clump_4_plus_fastball", "base_credits": 475, "max_threats": 5, "sleeper_chance": 0.05},
-	{"duration": 90.0, "threats": 5, "boss": "clump_6",               "base_credits": 600, "max_threats": 6, "sleeper_chance": 0.15},
-	{"duration": 90.0, "threats": 6, "boss": "finale",                "base_credits": 725, "max_threats": 7, "sleeper_chance": 0.25},
+	{"duration": 45.0, "threats": 1, "boss": "fastball",              "base_credits": 200, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
+	{"duration": 60.0, "threats": 2, "boss": "double_fastball",       "base_credits": 275, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.03},
+	{"duration": 75.0, "threats": 3, "boss": "clump_4",               "base_credits": 375, "max_threats": 4, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.05, "off_radar_chance": 0.05},
+	{"duration": 90.0, "threats": 4, "boss": "clump_4_plus_fastball", "base_credits": 475, "max_threats": 5, "sleeper_chance": 0.05, "sleeper2_chance": 0.03, "blocker_chance": 0.08, "off_radar_chance": 0.07},
+	{"duration": 90.0, "threats": 5, "boss": "split_volley",          "base_credits": 600, "max_threats": 6, "sleeper_chance": 0.15, "sleeper2_chance": 0.07, "blocker_chance": 0.12, "off_radar_chance": 0.10},
+	{"duration": 90.0, "threats": 6, "boss": "finale",                "base_credits": 725, "max_threats": 7, "sleeper_chance": 0.25, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.14},
 ]
 
 # Credits awarded = base_credits * pct, where pct is determined by how many
@@ -171,6 +171,9 @@ const BOSS_PATTERNS := {
 	],
 	"clump_6": [
 		{"at": 0.0, "fn": "_spawn_clump", "args": [6, true]},
+	],
+	"split_volley": [
+		{"at": 0.0, "fn": "_spawn_split_volley", "args": [3]},
 	],
 	"finale": [
 		{"at": 0.0, "fn": "_spawn_clump", "args": [6, true]},
@@ -510,6 +513,13 @@ func _on_Asteroid_Spawn_Timer_timeout() -> void:
 			var wave_size: int = min(_rng.randi_range(1, 16), room)
 			for i in wave_size:
 				_queue_whole_asteroid(_random_species())
+		var s: Dictionary = STAGES[_stage_index]
+		if _rng.randf() < s.get("sleeper2_chance", 0.0):
+			_spawn_sleeper_type2()
+		if _rng.randf() < s.get("blocker_chance", 0.0):
+			_spawn_blocker()
+		if _rng.randf() < s.get("off_radar_chance", 0.0):
+			_queue_off_radar_asteroid(_random_species())
 	_start_spawn_timer()
 
 
@@ -1120,6 +1130,84 @@ func _spawn_clump(count: int, big: bool) -> void:
 			_rng.randf_range(-CLUMP_SPACING, CLUMP_SPACING),
 			_rng.randf_range(-CLUMP_SPACING, CLUMP_SPACING))
 		_threat_backlog.append({"velocity_mult": 1.0 if big else 0.8, "position_override": cluster_center + offset, "size": SIZE_WHOLE})
+
+
+func _spawn_split_volley(count_per_side: int) -> void:
+	var earth: Node = get_tree().get_first_node_in_group("earth")
+	if earth == null:
+		return
+	var earth_pos: Vector2 = earth.global_position
+	var dir: Vector2 = Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
+	var dist: float = _rng.randf_range(15000, 18000)
+	for side in [1, -1]:
+		var center: Vector2 = earth_pos + dir * dist * side
+		for i in count_per_side:
+			var offset: Vector2 = Vector2(
+				_rng.randf_range(-CLUMP_SPACING, CLUMP_SPACING),
+				_rng.randf_range(-CLUMP_SPACING, CLUMP_SPACING))
+			_threat_backlog.append({"velocity_mult": 1.0, "position_override": center + offset, "size": SIZE_WHOLE})
+
+
+func _spawn_sleeper_type2() -> void:
+	var rock := _take_from_pool()
+	var species: String = _random_species()
+	var tex: Texture2D = _whole_texture(species)
+	var dir := Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
+	var pos: Vector2 = dir * _rng.randi_range(10000, 16000)
+	var vel: Vector2 = Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized() * _rng.randf_range(10, 80)
+	var props: Dictionary = _props(species)
+	rock.reset(species, SIZE_WHOLE, false, tex,
+			   _polygon_for_texture.get(tex, PackedVector2Array()),
+			   SIZE_SCALES[SIZE_WHOLE], pos, vel,
+			   _rng.randf_range(-0.1, 0.1), int(100 * props.integrity_mult))
+	rock.mass *= props.mass_mult
+	rock.is_sleeper = true
+	rock.sleeper_target_earth = true
+	rock.sleeper_fuse = _rng.randf_range(30.0, 90.0)
+	_spawn_queue.append(rock)
+
+
+func _spawn_blocker() -> void:
+	var rock := _take_from_pool()
+	var species: String = _random_species()
+	var tex: Texture2D = _whole_texture(species)
+	var dir := Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
+	var pos: Vector2 = dir * _rng.randi_range(8000, 14000)
+	var vel: Vector2 = Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized() * _rng.randf_range(10, 60)
+	var props: Dictionary = _props(species)
+	rock.reset(species, SIZE_WHOLE, false, tex,
+			   _polygon_for_texture.get(tex, PackedVector2Array()),
+			   SIZE_SCALES[SIZE_WHOLE], pos, vel,
+			   _rng.randf_range(-0.1, 0.1), int(100 * props.integrity_mult))
+	rock.mass *= props.mass_mult
+	rock.is_blocker = true
+	_spawn_queue.append(rock)
+
+
+func _queue_off_radar_asteroid(species: String) -> void:
+	var rock := _take_from_pool()
+	var tex: Texture2D = _whole_texture(species)
+	var dir := Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
+	var pos: Vector2 = dir * _rng.randi_range(15000, 20000)
+	var vel_dir := Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
+	var earth: Node = get_tree().get_first_node_in_group("earth")
+	if earth != null:
+		var earth_pos: Vector2 = (earth as Node2D).global_position
+		var earth_r: float = _node_visual_radius(earth)
+		if earth_r > 0.0:
+			for _i in 10:
+				if not _is_on_collision_course_world(pos, vel_dir, earth_pos, earth_r):
+					break
+				vel_dir = Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
+	var vel: Vector2 = vel_dir * _rng.randf_range(1, 1000)
+	var props: Dictionary = _props(species)
+	rock.reset(species, SIZE_WHOLE, false, tex,
+			   _polygon_for_texture.get(tex, PackedVector2Array()),
+			   SIZE_SCALES[SIZE_WHOLE], pos, vel,
+			   _rng.randf_range(-0.2, 0.2), int(100 * props.integrity_mult))
+	rock.mass *= props.mass_mult
+	rock.is_off_radar = true
+	_spawn_queue.append(rock)
 
 
 # Fire a full volley from the backlog, but only when the field is clear.

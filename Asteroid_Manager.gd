@@ -136,8 +136,8 @@ enum Phase { ACTIVE, RESPITE, WON, DEAD }
 const STAGES := [
 	{"duration": 45.0, "threats": 1, "boss": "fastball",              "base_credits": 200, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
 	{"duration": 60.0, "threats": 2, "boss": "double_fastball",       "base_credits": 275, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.03},
-	{"duration": 75.0, "threats": 3, "boss": "line_4",                 "base_credits": 375, "max_threats": 4, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.05, "off_radar_chance": 0.05},
-	{"duration": 90.0, "threats": 4, "boss": "semicircle_4_plus_fastball", "base_credits": 475, "max_threats": 5, "sleeper_chance": 0.05, "sleeper2_chance": 0.03, "blocker_chance": 0.08, "off_radar_chance": 0.07},
+	{"duration": 75.0, "threats": 3, "boss": "clump_4",               "base_credits": 375, "max_threats": 4, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.05, "off_radar_chance": 0.05},
+	{"duration": 90.0, "threats": 4, "boss": "clump_4_plus_fastball", "base_credits": 475, "max_threats": 5, "sleeper_chance": 0.05, "sleeper2_chance": 0.03, "blocker_chance": 0.08, "off_radar_chance": 0.07},
 	{"duration": 90.0, "threats": 5, "boss": "split_volley",          "base_credits": 600, "max_threats": 6, "sleeper_chance": 0.15, "sleeper2_chance": 0.07, "blocker_chance": 0.12, "off_radar_chance": 0.10},
 	{"duration": 90.0, "threats": 6, "boss": "finale",                "base_credits": 725, "max_threats": 7, "sleeper_chance": 0.25, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.14},
 ]
@@ -163,36 +163,20 @@ const BOSS_PATTERNS := {
 		{"at": 0.6, "fn": "_spawn_fastball", "args": []},
 	],
 	"clump_4": [
-		{"at": 0.0, "fn": "_spawn_clump", "args": [4, false]},
+		{"at": 0.0, "fn": "_spawn_random_clump", "args": [4]},
 	],
 	"clump_4_plus_fastball": [
-		{"at": 0.0, "fn": "_spawn_clump", "args": [4, false]},
+		{"at": 0.0, "fn": "_spawn_random_clump", "args": [4]},
 		{"at": 2.0, "fn": "_spawn_fastball", "args": []},
-	],
-	"line_4": [
-		{"at": 0.0, "fn": "_spawn_line", "args": [4]},
-	],
-	"line_5": [
-		{"at": 0.0, "fn": "_spawn_line", "args": [5]},
-	],
-	"semicircle_4": [
-		{"at": 0.0, "fn": "_spawn_semicircle", "args": [4]},
-	],
-	"semicircle_4_plus_fastball": [
-		{"at": 0.0, "fn": "_spawn_semicircle", "args": [4]},
-		{"at": 2.0, "fn": "_spawn_fastball", "args": []},
-	],
-	"semicircle_5": [
-		{"at": 0.0, "fn": "_spawn_semicircle", "args": [5]},
 	],
 	"clump_6": [
-		{"at": 0.0, "fn": "_spawn_clump", "args": [6, true]},
+		{"at": 0.0, "fn": "_spawn_random_clump", "args": [6]},
 	],
 	"split_volley": [
 		{"at": 0.0, "fn": "_spawn_split_volley", "args": [3]},
 	],
 	"finale": [
-		{"at": 0.0, "fn": "_spawn_clump", "args": [6, true]},
+		{"at": 0.0, "fn": "_spawn_random_clump", "args": [6]},
 		{"at": 2.0, "fn": "_spawn_fastball", "args": []},
 	],
 }
@@ -1146,6 +1130,13 @@ func _spawn_clump(count: int, big: bool) -> void:
 			_rng.randf_range(-CLUMP_SPACING, CLUMP_SPACING),
 			_rng.randf_range(-CLUMP_SPACING, CLUMP_SPACING))
 		_threat_backlog.append({"velocity_mult": 1.0 if big else 0.8, "position_override": cluster_center + offset, "size": SIZE_WHOLE})
+
+
+func _spawn_random_clump(count: int) -> void:
+	match _rng.randi() % 3:
+		0: _spawn_clump(count, count > 4)
+		1: _spawn_line(count)
+		2: _spawn_semicircle(count)
 
 
 func _spawn_split_volley(count_per_side: int) -> void:

@@ -297,6 +297,11 @@ func _check_earth_impacts() -> void:
 	for c in get_children():
 		if not c.is_in_group("asteroid"):
 			continue
+		# Only intentional threat rocks can impact Earth. Nuisance rocks that
+		# happen to drift toward Earth pass through harmlessly — the difficulty
+		# curve is controlled entirely by the threat system.
+		if not c.is_threat:
+			continue
 		# Assign impact fate the first time a rock qualifies as a threat. The
 		# impact point is random along the chord the trajectory cuts through
 		# Earth's disk — the rock travels along its course, dying at that point.
@@ -490,7 +495,19 @@ func _queue_whole_asteroid(species: String) -> void:
 	var tex: Texture2D = _whole_texture(species)
 	var dir := Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
 	var pos: Vector2 = dir * _rng.randi_range(15000, 20000)
-	var vel := Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized() * _rng.randf_range(1, 1000)
+	# Re-roll velocity until it doesn't aim at Earth. Nuisance rocks must never
+	# threaten Earth — the difficulty curve is owned entirely by the threat system.
+	var vel_dir := Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
+	var earth: Node = get_tree().get_first_node_in_group("earth")
+	if earth != null:
+		var earth_pos: Vector2 = (earth as Node2D).global_position
+		var earth_r: float = _node_visual_radius(earth)
+		if earth_r > 0.0:
+			for _i in 10:
+				if not _is_on_collision_course_world(pos, vel_dir, earth_pos, earth_r):
+					break
+				vel_dir = Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
+	var vel := vel_dir * _rng.randf_range(1, 1000)
 	var rot_rate := _rng.randf_range(-0.2, 0.2)
 	rock.reset(species, SIZE_WHOLE, false, tex, _polygon_for_texture.get(tex, PackedVector2Array()),
 			   SIZE_SCALES[SIZE_WHOLE], pos, vel, rot_rate, 100)

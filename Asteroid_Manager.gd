@@ -86,6 +86,9 @@ const MASK_FRAGMENT := LAYER_PLAYER                  # 1
 # entries × up to 8 fragments each; a dense clump breaking simultaneously
 # would otherwise produce hundreds of nodes at once.
 const MAX_FRAGMENTS_PER_BREAK := 12
+# Chance a fragment from a threat rock gets deflected off its Earth-course by
+# the breakup — those fragments become harmless nuisance debris.
+const FRAGMENT_DEFLECT_CHANCE := 0.4
 
 # Fragment collision polygon vertex count (cheap convex octagon).
 const FRAGMENT_HULL_SIDES := 8
@@ -586,7 +589,7 @@ func _fragment(parent_rock) -> void:
 			var rot_rate: float = parent_rock.rotation_rate + _rng.randf_range(-_rotation_jitter(size), _rotation_jitter(size))
 			frag.reset(parent_rock.species, size, true, spec.texture, poly, sprite_scale,
 					   pos, vel, rot_rate, _integrity_for_size(size))
-			frag.is_threat = parent_rock.is_threat
+			frag.is_threat = parent_rock.is_threat and _rng.randf() >= FRAGMENT_DEFLECT_CHANCE
 			_spawn_queue.append(frag)
 			total_spawned += 1
 

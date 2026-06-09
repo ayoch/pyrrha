@@ -136,8 +136,8 @@ enum Phase { ACTIVE, RESPITE, WON, DEAD }
 const STAGES := [
 	{"duration": 45.0, "threats": 1, "boss": "fastball",              "base_credits": 200, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
 	{"duration": 60.0, "threats": 2, "boss": "double_fastball",       "base_credits": 275, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.03},
-	{"duration": 75.0, "threats": 3, "boss": "clump_4",               "base_credits": 375, "max_threats": 4, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.05, "off_radar_chance": 0.05},
-	{"duration": 90.0, "threats": 4, "boss": "clump_4_plus_fastball", "base_credits": 475, "max_threats": 5, "sleeper_chance": 0.05, "sleeper2_chance": 0.03, "blocker_chance": 0.08, "off_radar_chance": 0.07},
+	{"duration": 75.0, "threats": 3, "boss": "line_4",                 "base_credits": 375, "max_threats": 4, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.05, "off_radar_chance": 0.05},
+	{"duration": 90.0, "threats": 4, "boss": "semicircle_4_plus_fastball", "base_credits": 475, "max_threats": 5, "sleeper_chance": 0.05, "sleeper2_chance": 0.03, "blocker_chance": 0.08, "off_radar_chance": 0.07},
 	{"duration": 90.0, "threats": 5, "boss": "split_volley",          "base_credits": 600, "max_threats": 6, "sleeper_chance": 0.15, "sleeper2_chance": 0.07, "blocker_chance": 0.12, "off_radar_chance": 0.10},
 	{"duration": 90.0, "threats": 6, "boss": "finale",                "base_credits": 725, "max_threats": 7, "sleeper_chance": 0.25, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.14},
 ]
@@ -168,6 +168,22 @@ const BOSS_PATTERNS := {
 	"clump_4_plus_fastball": [
 		{"at": 0.0, "fn": "_spawn_clump", "args": [4, false]},
 		{"at": 2.0, "fn": "_spawn_fastball", "args": []},
+	],
+	"line_4": [
+		{"at": 0.0, "fn": "_spawn_line", "args": [4]},
+	],
+	"line_5": [
+		{"at": 0.0, "fn": "_spawn_line", "args": [5]},
+	],
+	"semicircle_4": [
+		{"at": 0.0, "fn": "_spawn_semicircle", "args": [4]},
+	],
+	"semicircle_4_plus_fastball": [
+		{"at": 0.0, "fn": "_spawn_semicircle", "args": [4]},
+		{"at": 2.0, "fn": "_spawn_fastball", "args": []},
+	],
+	"semicircle_5": [
+		{"at": 0.0, "fn": "_spawn_semicircle", "args": [5]},
 	],
 	"clump_6": [
 		{"at": 0.0, "fn": "_spawn_clump", "args": [6, true]},
@@ -1146,6 +1162,39 @@ func _spawn_split_volley(count_per_side: int) -> void:
 				_rng.randf_range(-CLUMP_SPACING, CLUMP_SPACING),
 				_rng.randf_range(-CLUMP_SPACING, CLUMP_SPACING))
 			_threat_backlog.append({"velocity_mult": 1.0, "position_override": center + offset, "size": SIZE_WHOLE})
+
+
+# Rocks spaced evenly along a line perpendicular to the Earth-facing direction,
+# so they arrive as a wall rather than a cluster.
+func _spawn_line(count: int) -> void:
+	var earth: Node = get_tree().get_first_node_in_group("earth")
+	if earth == null:
+		return
+	var earth_pos: Vector2 = earth.global_position
+	var dir: Vector2 = Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
+	var cluster_center: Vector2 = earth_pos + dir * _rng.randf_range(15000, 18000)
+	var perp: Vector2 = dir.rotated(PI * 0.5)
+	for i in count:
+		var t: float = (float(i) - float(count - 1) * 0.5) * CLUMP_SPACING
+		_threat_backlog.append({"velocity_mult": 0.9, "position_override": cluster_center + perp * t, "size": SIZE_WHOLE})
+
+
+# Rocks arranged on a semicircular arc whose convex (outer) edge points toward
+# Earth — the arc bows at Earth like a cupped hand. All rocks aim straight in.
+func _spawn_semicircle(count: int) -> void:
+	var earth: Node = get_tree().get_first_node_in_group("earth")
+	if earth == null:
+		return
+	var earth_pos: Vector2 = earth.global_position
+	var dir: Vector2 = Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
+	var cluster_center: Vector2 = earth_pos + dir * _rng.randf_range(15000, 18000)
+	var to_earth: Vector2 = (earth_pos - cluster_center).normalized()
+	var arc_radius: float = CLUMP_SPACING * max(count - 1, 1) / PI
+	for i in count:
+		var frac: float = float(i) / float(max(count - 1, 1))
+		var angle: float = lerp(-PI * 0.5, PI * 0.5, frac)
+		var offset: Vector2 = to_earth.rotated(angle) * arc_radius
+		_threat_backlog.append({"velocity_mult": 0.9, "position_override": cluster_center + offset, "size": SIZE_WHOLE})
 
 
 func _spawn_sleeper_type2() -> void:

@@ -10,14 +10,13 @@ Implemented:
 - **Threat rock volley system** — capped concurrent threats per stage (2→7), holds until field clear then fires full volley at once
 - **Asteroid type differentiation** — C (fragile, many frags), S (baseline), M (tough, dense, lethal, few frags)
 - **Sleeper rocks (Type 1 dive)** — proximity/random/attack-triggered, homes on player, not counted against threat cap
-- **Boss patterns** — fastball, clump, layered clump, finale; scale with stage cap
-- **sleeper_chance per stage** — independent of threat cap, ramps from stage 4 onward
-
-Designed, not yet built:
-- **Timing pressure** — two volleys inbound simultaneously from opposite sides of the map; player can only be in one place
-- **Player-targeting rock** — rock that specifically tries to stay between the player and an incoming threat; not aggressive, just obstructive
-- **Off-radar rock** — a type that doesn't appear on the minimap; player has to visually spot it in the field; attacks the toolset rather than just health
-- **Type 2 sleeper** — long-fuse timer activation, aims at Earth, counts against max_threats (companion to existing Type 1 dive)
+- **Sleeper rocks (Type 2 fuse)** — `sleeper_target_earth=true`, counts down a fuse then steals a threat cap slot and aims at Earth
+- **Blocker rock** — PD controller positions itself between player and nearest threat; obstruction not aggression
+- **Off-radar rock** — invisible to minimap; player has to visually spot it
+- **Split volley** — simultaneous volleys from opposite sides of Earth
+- **Formation variants** — straight line (wall of rocks arrives together), semicircle (arc bowing toward Earth, outer edge leading)
+- **Boss patterns** — fastball, double_fastball, line_4, semicircle_4+fastball, split_volley, finale; scale with stage cap
+- **sleeper_chance / sleeper2_chance / blocker_chance / off_radar_chance per stage** — independent of threat cap, ramp from stages 4-6 onward
 
 ---
 

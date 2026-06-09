@@ -230,6 +230,14 @@ const SIZE_DEATH_SCALE := {
 	2: 0.05,    # medium
 	1: 0.005,   # small — barely registers
 }
+# Floor deaths per size — even an ocean impact causes tsunamis, pressure waves,
+# flooding. Also the fallback when Earth's texture image can't be sampled.
+const MIN_DEATHS_FOR_SIZE := {
+	4: 50_000,
+	3: 5_000,
+	2: 500,
+	1: 0,
+}
 const EARTH_IMPACT_TOLERANCE := 50.0   # world units; impact triggers within this of impact_point
 var _earth_image: Image
 var _earth_image_scale: float = 1.0   # the Earth sprite's scale at image-capture time
@@ -407,29 +415,29 @@ func _build_population_data() -> void:
 
 
 func _sample_deaths(impact_world_pos: Vector2, size: int) -> int:
+	var min_deaths: int = MIN_DEATHS_FOR_SIZE.get(size, 0)
 	if _earth_image == null:
-		return 0
+		return min_deaths
 	var earth = get_tree().get_first_node_in_group("earth")
 	if earth == null:
-		return 0
+		return min_deaths
 	# Convert world impact position to a pixel in Earth's texture.
 	var offset: Vector2 = impact_world_pos - earth.global_position
 	var img_size: Vector2 = Vector2(_earth_image.get_size())
 	var px: Vector2 = img_size * 0.5 + offset / _earth_image_scale
 	if px.x < 0 or px.x >= img_size.x or px.y < 0 or px.y >= img_size.y:
-		return 0
+		return min_deaths
 	var color: Color = _earth_image.get_pixel(int(px.x), int(px.y))
 	if color.a < 0.1:
-		return 0   # transparent — outside Earth's disk
-	# Land vs ocean by simple R+G-B heuristic on the planet art.
+		return min_deaths   # outside Earth's disk
+	# Land vs ocean heuristic. Ocean still kills (tsunamis) but far fewer.
 	var land_factor: float = clamp((color.r + color.g) * 0.5 - color.b, 0.0, 1.0)
 	if land_factor < 0.05:
-		return 0
-	# Noise gives density variation within land — same point always returns the
-	# same value, so the world is deterministic.
+		return min_deaths
+	# Noise gives density variation within land.
 	var noise_val: float = _density_noise.get_noise_2dv(px) * 0.5 + 0.5
 	var size_mult: float = float(SIZE_DEATH_SCALE.get(size, 0.0))
-	return int(land_factor * noise_val * MAX_DEATHS_PER_IMPACT * size_mult)
+	return max(int(land_factor * noise_val * MAX_DEATHS_PER_IMPACT * size_mult), min_deaths)
 
 
 func _node_visual_radius(n) -> float:

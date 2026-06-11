@@ -1,22 +1,40 @@
 # Claude Code Handoff Document
-**Last Updated:** 2026-06-09
+**Last Updated:** 2026-06-11
 **Updated By:** Sonnet 4.6
+
+---
+
+## SESSION — 2026-06-11 (Sonnet 4.6) — 30-stage ramp, formation randomization, polish
+
+### Formations randomized
+`_spawn_random_clump(count)` rolls between tight cluster / line / semicircle each spawn. All clump-class boss patterns (`clump_4`, `clump_4_plus_fastball`, `clump_6`, `finale`) call it — formation type rotates per spawn so no two playthroughs feel identical. Individual `_spawn_clump`, `_spawn_line`, `_spawn_semicircle` remain as primitives.
+
+### 30-stage difficulty ramp
+Replaced the 6-stage definition with 30. Primary levers (`threats`, `max_threats`) grow slowly across the full arc. Flavor mechanics introduced one per stage:
+- S4 off-radar; S7 clump boss; S8 blocker; S11 Type-1 sleeper; S15 split-volley; S16 Type-2 sleeper; S18 clump-6 boss; S20 finale boss
+- After S20 all mechanics are in play; S21–30 cycle the harder patterns while pushing `threats` (→14) and `max_threats` (→9)
+- `threats > max_threats` is intentional — overflow creates follow-up volleys after the first clears
+
+### Polish fixes
+- **Death jitter**: `_sample_deaths` rolls `randf_range(0.65, 1.45)` on the computed result. Same rock, same continent, different numbers every time. Floor still respected.
+- **Station departure velocity zeroed**: `StationShop._on_depart` sets `player.velocity = Vector2.ZERO` before emitting the departed signal. Ship is stationary when control returns.
+- **Mining laser distance falloff**: damage scales `clamp(1.0 - dist/2000.0, 0.3, 1.0)` from ray origin to hit point. Full at contact, 30% floor at 2000+ units. Tunable in `Player._fire_beam`.
 
 ---
 
 ## DESIGN BACKLOG — Difficulty mechanics
 
 Implemented:
-- **Threat rock volley system** — capped concurrent threats per stage (2→7), holds until field clear then fires full volley at once
+- **Threat rock volley system** — capped concurrent threats per stage (2→9), holds until field clear then fires full volley at once
 - **Asteroid type differentiation** — C (fragile, many frags), S (baseline), M (tough, dense, lethal, few frags)
 - **Sleeper rocks (Type 1 dive)** — proximity/random/attack-triggered, homes on player, not counted against threat cap
 - **Sleeper rocks (Type 2 fuse)** — `sleeper_target_earth=true`, counts down a fuse then steals a threat cap slot and aims at Earth
 - **Blocker rock** — PD controller positions itself between player and nearest threat; obstruction not aggression
 - **Off-radar rock** — invisible to minimap; player has to visually spot it
 - **Split volley** — simultaneous volleys from opposite sides of Earth
-- **Formation variants** — straight line (wall of rocks arrives together), semicircle (arc bowing toward Earth, outer edge leading)
-- **Boss patterns** — fastball, double_fastball, line_4, semicircle_4+fastball, split_volley, finale; scale with stage cap
-- **sleeper_chance / sleeper2_chance / blocker_chance / off_radar_chance per stage** — independent of threat cap, ramp from stages 4-6 onward
+- **Formation variants** — tight cluster, straight line (wall of rocks), semicircle (arc bowing toward Earth); randomized per spawn
+- **Boss patterns** — fastball, double_fastball, clump_4, clump_4_plus_fastball, clump_6, split_volley, finale; clump bosses random-formation each spawn
+- **30-stage difficulty ramp** — primary levers scale slowly; one new mechanic per stage; all in play by S20
 
 ---
 

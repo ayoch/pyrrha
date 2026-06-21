@@ -19,7 +19,19 @@ signal status_message(text: String)
 
 # Dialog box — queued, auto-dismissed. speaker is a display name; icon_key
 # maps to a portrait in DialogBox.PORTRAITS ("kaowitz", etc.).
-signal dialog_message(speaker: String, icon_key: String, text: String)
+# priority: higher shows first and can preempt a lower one (story > reactive).
+# ttl: seconds the line may wait in queue before being dropped as stale
+#      (-1 = never expires; story lines use this so they're guaranteed to play).
+# Emitted by DialogDirector; consumed by DialogBox.
+signal dialog_message(speaker: String, icon_key: String, text: String, priority: int, ttl: float)
+
+# Game-event signals that drive dialog (and anything else interested).
+# Emitted by AsteroidManager.
+signal stage_started(stage_idx: int)
+signal boss_started(stage_idx: int, pattern: String)
+signal respite_started(stage_idx: int)
+signal earth_impact(deaths: int, size: int, stage_idx: int, was_threat: bool)
+signal threat_inbound(size: int)
 
 # Dialog settings (read by DialogBox; written by PauseMenu settings).
 var dialog_enabled: bool = true

@@ -103,6 +103,7 @@ var _defense_turret: Node = null
 
 
 func _ready() -> void:
+	add_to_group("player")
 	var add_mat := CanvasItemMaterial.new()
 	add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	mining_beam_left.material = add_mat

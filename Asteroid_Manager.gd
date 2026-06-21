@@ -391,6 +391,7 @@ func _check_earth_impacts() -> void:
 					c.impact_point = ip
 					c.impact_deaths = _sample_deaths(ip, c.size, c.species)
 					c.has_impact_fate = true
+					GlobalSignals.threat_inbound.emit(c.size)
 		# If fate is assigned, trigger impact when the rock reaches or passes
 		# its impact point. We check both proximity (slow rocks) and "have we
 		# passed it along the velocity direction" (fast rocks, overshoot).
@@ -416,6 +417,8 @@ func _on_earth_impact(asteroid, stage) -> void:
 	if asteroid.impact_deaths > 0:
 		_total_deaths += asteroid.impact_deaths
 		GlobalSignals.emit_signal("total_deaths_changed", _total_deaths)
+	GlobalSignals.earth_impact.emit(asteroid.impact_deaths, asteroid.size, _stage_index,
+		("is_threat" in asteroid and asteroid.is_threat))
 	# Log every impact (even 0-death ocean strikes) so the casualty report
 	# shows the full picture of what's hitting Earth.
 	_casualty_log.append({
@@ -973,6 +976,7 @@ func _start_stage(idx: int) -> void:
 		_sleeper_schedule.append({"at": _rng.randf_range(0.2, 0.7) * s.duration})
 	GlobalSignals.emit_signal("status_message",
 		"Stage %d of %d — survive!" % [idx + 1, STAGES.size()])
+	GlobalSignals.stage_started.emit(idx)
 
 
 func _advance_phase(delta: float) -> void:
@@ -1018,6 +1022,7 @@ func _tick_threats() -> void:
 			_boss_queue.append({"at": _phase_elapsed + ev.at, "fn": ev.fn, "args": ev.args})
 		GlobalSignals.emit_signal("status_message",
 			"BOSS: %s incoming" % STAGES[_stage_index].boss.capitalize().replace("_", " "))
+		GlobalSignals.boss_started.emit(_stage_index, STAGES[_stage_index].boss)
 
 
 func _tick_boss(_delta: float) -> void:
@@ -1064,6 +1069,7 @@ func _begin_respite() -> void:
 	_has_docked_this_respite = false
 	_shop_opened_this_respite = false
 	GlobalSignals.emit_signal("status_message", "Dock at the station for repairs and a rest.")
+	GlobalSignals.respite_started.emit(_stage_index)
 
 
 func _calculate_stage_credits(stage_deaths: int) -> int:

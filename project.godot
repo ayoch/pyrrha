@@ -18,6 +18,7 @@ config/features=PackedStringArray("4.6")
 
 GlobalSignals="*res://globals/GlobalSignals.gd"
 Settings="*res://globals/Settings.gd"
+DialogDirector="*res://globals/DialogDirector.gd"
 
 [display]
 

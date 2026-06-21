@@ -1,6 +1,31 @@
 # Claude Code Handoff Document
-**Last Updated:** 2026-06-11
-**Updated By:** Sonnet 4.6
+**Last Updated:** 2026-06-21
+**Updated By:** Fable 5
+
+---
+
+## SESSION — 2026-06-21 (Fable 5) — Dialog system (reactive + story)
+
+Built out the dialog system that was started as just a view (`DialogBox`) with no emitters. **Full write-up: `docs/dialog_system.md`** (first doc in a new `docs/` dir — read it before touching this).
+
+**Two cooperating systems**, per Jon's spec:
+- **Reactive** — automatic situational lines; each situation has multiple hand-written variants, played random-non-repeating (shuffle bag). Low priority, dropped if stale.
+- **Story** — scripted beats keyed by stage + cue (start/boss/respite); must-play, high priority, replays on a fresh run.
+- **Interaction:** priority (story 10 > reactive 0). Story preempts reactive and never expires; reactive carries a 5s ttl so stale callouts are dropped, not shown late. The enable toggle silences reactive but never story.
+
+**New files:**
+- `globals/DialogContent.gd` (`class_name DialogContent`) — all lines as data. **This is the file to edit for content; everything in it is placeholder.**
+- `globals/DialogDirector.gd` — autoload (registered in `project.godot`); listens to game signals, drives both systems.
+
+**Changed:**
+- `UI/DialogBox.gd` — reworked from FIFO to a priority queue with ttl/preempt; `PROCESS_MODE_ALWAYS` so it runs during respite; story exempt from the enable toggle. Signal signature is now `dialog_message(speaker, icon_key, text, priority, ttl)`.
+- `globals/GlobalSignals.gd` — expanded `dialog_message`; added `stage_started`, `boss_started`, `respite_started`, `earth_impact`, `threat_inbound`.
+- `Asteroid_Manager.gd` — emits those five at the existing stage/boss/respite/impact/threat-fate sites (no behavior change, just added emits).
+- `actors/Player/Player.gd` — `add_to_group("player")` so the Director can read true `max_health` for the low-hull threshold.
+
+**Not validated in-engine** — no Godot binary on this machine to headless-check. Indentation/tabs verified by hand. Worth a quick editor open to confirm parse, especially the multiline lambda in `DialogBox._sort_queue`.
+
+**Follow-ups (in the doc):** no skip/advance key; dialog settings not persisted to `Settings`; content + portraits are placeholder (only "Kaowitz", no portrait PNG yet).
 
 ---
 

@@ -23,7 +23,7 @@ Built out the dialog system that was started as just a view (`DialogBox`) with n
 - `Asteroid_Manager.gd` — emits those five at the existing stage/boss/respite/impact/threat-fate sites (no behavior change, just added emits).
 - `actors/Player/Player.gd` — `add_to_group("player")` so the Director can read true `max_health` for the low-hull threshold.
 
-**Not validated in-engine** — no Godot binary on this machine to headless-check. Indentation/tabs verified by hand. Worth a quick editor open to confirm parse, especially the multiline lambda in `DialogBox._sort_queue`.
+**Validated** via `Godot --headless --import .` (binary at `~/Downloads/Godot 4.app`): clean import, exit 0, zero SCRIPT/Compile/Parse errors with autoloads registered. (Note: isolated `--check-only --script <file>` gives false "Identifier not found: GlobalSignals" because it doesn't load autoloads — use `--import` for project-context validation.)
 
 **Follow-ups (in the doc):** no skip/advance key; dialog settings not persisted to `Settings`; content + portraits are placeholder (only "Kaowitz", no portrait PNG yet).
 

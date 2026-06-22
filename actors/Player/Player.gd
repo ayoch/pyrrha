@@ -233,16 +233,22 @@ func _handle_thrust(delta: float) -> void:
 
 	var strafe_left := false
 	var strafe_right := false
-	if GlobalSignals.control_mode == GlobalSignals.ControlMode.MOUSE_TURN:
+	var mode: int = GlobalSignals.control_mode
+	if mode == GlobalSignals.ControlMode.MOUSE_TURN:
 		# A/D strafe (turning is done by the mouse).
-		var ship_right := -forward.orthogonal()
 		strafe_right = Input.is_action_pressed("right")
 		strafe_left = Input.is_action_pressed("left")
+	elif mode == GlobalSignals.ControlMode.DECOUPLED:
+		# Q/E strafe (A/D rotate the hull, mouse drives the turrets).
+		strafe_right = Input.is_action_pressed("strafe_right")
+		strafe_left = Input.is_action_pressed("strafe_left")
+	# In KEYBOARD_TURN mode, A/D rotate (handled in _handle_turning); no strafe.
+	if strafe_left or strafe_right:
+		var ship_right := -forward.orthogonal()
 		if strafe_right:
 			velocity += ship_right * thrust_strafe * energy_frac * delta
 		if strafe_left:
 			velocity -= ship_right * thrust_strafe * energy_frac * delta
-	# In KEYBOARD_TURN mode, A/D rotate (handled in _handle_turning); no strafe.
 
 	_update_thrusters(thrusting_forward, thrusting_back, strafe_left, strafe_right)
 
@@ -355,7 +361,7 @@ func _handle_mining_laser(_delta: float) -> void:
 	mining_beam_right.visible = false
 	if not Input.is_action_pressed("shoot"):
 		return
-	var half_cone: float = deg_to_rad(mining_cone_degrees * 0.5)
+	var half_cone: float = _aim_half_cone()
 	if abs(get_angle_to(get_global_mouse_position())) > half_cone:
 		return
 	_fire_beam(mining_beam_left, mining_ray_left)
@@ -366,9 +372,19 @@ func _handle_mining_laser(_delta: float) -> void:
 # the beams fire within. Each barrel's art points "up", so the +90° cant rests
 # it along ship-forward; angle-to-target (in the mount's local frame) + PI/2
 # aims it, with per-mount convergence on the target.
+# Half-angle of the turret aim/fire arc, measured from ship-forward. In
+# DECOUPLED mode the turrets are operated independently of the hull, so the
+# arc opens to a full circle (PI = no effective clamp); otherwise it's the
+# forward mining cone.
+func _aim_half_cone() -> float:
+	if GlobalSignals.control_mode == GlobalSignals.ControlMode.DECOUPLED:
+		return PI
+	return deg_to_rad(mining_cone_degrees * 0.5)
+
+
 func _aim_turrets() -> void:
 	var target: Vector2 = get_global_mouse_position()
-	var half_cone: float = deg_to_rad(mining_cone_degrees * 0.5)
+	var half_cone: float = _aim_half_cone()
 	_aim_barrel(turret_barrel_left, mining_beam_left, mining_ray_left, target, half_cone)
 	_aim_barrel(turret_barrel_right, mining_beam_right, mining_ray_right, target, half_cone)
 
@@ -391,12 +407,14 @@ func _aim_barrel(
 # Defense laser drain is read from the turret child node each frame.
 func _handle_energy(delta: float) -> void:
 	var laser_firing: bool = Input.is_action_pressed("shoot") \
-		and abs(get_angle_to(get_global_mouse_position())) <= deg_to_rad(mining_cone_degrees * 0.5)
+		and abs(get_angle_to(get_global_mouse_position())) <= _aim_half_cone()
 	var thrusting: bool = (
 		Input.is_action_pressed("forward")
 		or Input.is_action_pressed("back")
 		or Input.is_action_pressed("left")
 		or Input.is_action_pressed("right")
+		or Input.is_action_pressed("strafe_left")
+		or Input.is_action_pressed("strafe_right")
 		or Input.is_action_pressed("stop")
 	)
 	var rotating: bool = false

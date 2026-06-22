@@ -4,6 +4,42 @@
 
 ---
 
+## SESSION — 2026-06-22 (Opus 4.8, Dweezil) — Third control scheme: DECOUPLED (keyboard ship + independent mouse turrets)
+
+Added a selectable control scheme alongside the existing two (the chooser is in the **pause-menu Settings panel**, not a standalone settings menu — that's where the control-scheme radio lives).
+
+### The new mode — `ControlMode.DECOUPLED`
+- **Ship is fully keyboard:** W/S thrust, A/D rotate the hull, **Q/E strafe**.
+- **Turrets are independent of the hull:** mouse aims, left-click (`shoot`) fires, with a **full 360° arc** — the ship can point one way while the turrets fire another.
+- Enum now `MOUSE_TURN, KEYBOARD_TURN, DECOUPLED` (`globals/GlobalSignals.gd`).
+
+### How the 360° turret decoupling works (small, localized)
+The beam/raycast in `_fire_beam` *already* aim from the muzzle toward the mouse — the only thing tying turrets to ship-facing was the `mining_cone_degrees` clamp (forward cone). New helper `Player._aim_half_cone()` returns `PI` (no effective clamp) in DECOUPLED, else the normal `mining_cone_degrees*0.5`. Routed through the 3 clamp sites: `_handle_mining_laser`, `_aim_turrets`, `_handle_energy`. The other two modes are unchanged.
+
+### Input map (`project.godot`)
+- Added `strafe_left` = **Q** (81), `strafe_right` = **E** (69).
+- **E was already bound to `pause_without_menu`** (the active debug pause toggle in `Main.tscn`/`PauseNoMenu.gd`). Moved that to **P** (80) so E is free for strafe. Q was unbound.
+- Strafe actions are only *read* in DECOUPLED mode (`_handle_thrust`), so Q/E do nothing in the other two schemes.
+
+### Persistence
+Control mode now **sticks across launches** (`controls/control_mode` in `user://settings.cfg`). GlobalSignals stays the live source of truth; `Settings._load()` applies the saved value to `GlobalSignals.control_mode` on boot (GlobalSignals is the earlier autoload, so it exists), and `Settings.save()` writes it. Each control-scheme button in PauseMenu calls `Settings.save()`. (Dialog settings are still not persisted — out of scope here.)
+
+### Files touched
+- `globals/GlobalSignals.gd` — enum + doc comment.
+- `actors/Player/Player.gd` — `_aim_half_cone()`; DECOUPLED strafe branch in `_handle_thrust`; strafe added to the energy-drain `thrusting` test. `_handle_turning`/`_update_thrusters` needed no change (their `else` branch already covers A/D rotate + flames for DECOUPLED).
+- `globals/Settings.gd` — load/save `controls/control_mode` (applies to / reads from GlobalSignals).
+- `UI/PauseMenu.tscn` + `UI/PauseMenu.gd` — third radio button "WASD steer + Q/E strafe; mouse turrets (360°)", `_on_decoupled_pressed`, refresh-state line, `Settings.save()` on each scheme change.
+- `project.godot` — strafe actions + pause_without_menu rebind.
+
+### Validated
+`Godot --headless --import .` → exit 0, zero SCRIPT/Parse/Compile errors. **Not yet playtested in a live match** — needs an in-game check (strafe feel, 360° fire, P-key pause still works).
+
+### Decisions made (flag if wrong)
+- **Turret arc = full 360°** in this mode (the literal reading of "operate the turrets independently"). If the hull should block backward fire, we'd add per-turret arc limits instead — not done.
+- **A/D rotate, Q/E strafe, W/S thrust** (from "wasd + q and e for strafing").
+
+---
+
 ## SESSION — 2026-06-22 (Opus 4.8, Dweezil) — Gun-less hull + modular mining turrets
 
 ### Player ship art → gun-less hull

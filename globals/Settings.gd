@@ -18,6 +18,9 @@ func _load() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(CONFIG_PATH) != OK:
 		return
+	# Control scheme lives on GlobalSignals (the live source of truth); we just
+	# persist it here. GlobalSignals is an earlier autoload, so it already exists.
+	GlobalSignals.control_mode = int(cfg.get_value("controls", "control_mode", GlobalSignals.control_mode))
 	ui_scale = cfg.get_value("ui", "scale", 1.0)
 	ui_snap_enabled = cfg.get_value("hud", "snap_enabled", true)
 	ui_snap_size = cfg.get_value("hud", "snap_size", 8)
@@ -30,6 +33,7 @@ func _load() -> void:
 func save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(CONFIG_PATH)
+	cfg.set_value("controls", "control_mode", GlobalSignals.control_mode)
 	cfg.set_value("ui", "scale", ui_scale)
 	cfg.set_value("hud", "snap_enabled", ui_snap_enabled)
 	cfg.set_value("hud", "snap_size", ui_snap_size)

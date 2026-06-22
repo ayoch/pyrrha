@@ -1,7 +1,11 @@
 extends Node
 
 # Control scheme. Read by Player; written by PauseMenu's Settings panel.
-enum ControlMode { MOUSE_TURN, KEYBOARD_TURN }
+# MOUSE_TURN    : mouse turns the ship; A/D strafe.
+# KEYBOARD_TURN : A/D rotate; W/S thrust; mouse aims/fires within the forward cone.
+# DECOUPLED     : W/S thrust, A/D rotate, Q/E strafe (all keyboard); mouse drives
+#                 the turrets independently with a full 360° firing arc.
+enum ControlMode { MOUSE_TURN, KEYBOARD_TURN, DECOUPLED }
 var control_mode: int = ControlMode.MOUSE_TURN
 
 # Player lifecycle

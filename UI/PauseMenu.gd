@@ -11,6 +11,7 @@ extends CanvasLayer
 @onready var casualty_summary: Label = $Backdrop/Center/CasualtyPanel/Rows/Summary
 @onready var mouse_turn_btn: Button = $Backdrop/Center/SettingsPanel/Rows/MouseTurnButton
 @onready var keyboard_turn_btn: Button = $Backdrop/Center/SettingsPanel/Rows/KeyboardTurnButton
+@onready var decoupled_btn: Button = $Backdrop/Center/SettingsPanel/Rows/DecoupledButton
 @onready var dialog_toggle: Button = $Backdrop/Center/SettingsPanel/Rows/DialogToggle
 @onready var dialog_fast_btn: Button = $Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogFastButton
 @onready var dialog_normal_btn: Button = $Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogNormalButton
@@ -189,6 +190,7 @@ func _refresh_settings_state() -> void:
 	var m: int = GlobalSignals.control_mode
 	mouse_turn_btn.button_pressed = (m == GlobalSignals.ControlMode.MOUSE_TURN)
 	keyboard_turn_btn.button_pressed = (m == GlobalSignals.ControlMode.KEYBOARD_TURN)
+	decoupled_btn.button_pressed = (m == GlobalSignals.ControlMode.DECOUPLED)
 	dialog_toggle.button_pressed = GlobalSignals.dialog_enabled
 	var d: float = GlobalSignals.dialog_dismiss_sec
 	dialog_fast_btn.button_pressed   = (d == 4.0)
@@ -202,11 +204,19 @@ func _refresh_settings_state() -> void:
 
 func _on_mouse_turn_pressed() -> void:
 	GlobalSignals.control_mode = GlobalSignals.ControlMode.MOUSE_TURN
+	Settings.save()
 	_refresh_settings_state()
 
 
 func _on_keyboard_turn_pressed() -> void:
 	GlobalSignals.control_mode = GlobalSignals.ControlMode.KEYBOARD_TURN
+	Settings.save()
+	_refresh_settings_state()
+
+
+func _on_decoupled_pressed() -> void:
+	GlobalSignals.control_mode = GlobalSignals.ControlMode.DECOUPLED
+	Settings.save()
 	_refresh_settings_state()
 
 

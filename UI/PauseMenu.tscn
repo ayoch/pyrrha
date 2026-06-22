@@ -86,6 +86,11 @@ layout_mode = 2
 toggle_mode = true
 text = "WASD controls all motion; mouse aims/fires only"
 
+[node name="DecoupledButton" type="Button" parent="Backdrop/Center/SettingsPanel/Rows"]
+layout_mode = 2
+toggle_mode = true
+text = "WASD steer + Q/E strafe; mouse turrets (360°)"
+
 [node name="DialogTitle" type="Label" parent="Backdrop/Center/SettingsPanel/Rows"]
 layout_mode = 2
 text = "Communications"
@@ -214,6 +219,7 @@ text = "Back"
 [connection signal="pressed" from="Backdrop/Center/MainPanel/Rows/QuitButton" to="." method="_on_quit_pressed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/MouseTurnButton" to="." method="_on_mouse_turn_pressed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/KeyboardTurnButton" to="." method="_on_keyboard_turn_pressed"]
+[connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/DecoupledButton" to="." method="_on_decoupled_pressed"]
 [connection signal="toggled" from="Backdrop/Center/SettingsPanel/Rows/DialogToggle" to="." method="_on_dialog_toggle_toggled"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogFastButton" to="." method="_on_dialog_fast_pressed"]
 [connection signal="pressed" from="Backdrop/Center/SettingsPanel/Rows/DialogSpeedRow/DialogNormalButton" to="." method="_on_dialog_normal_pressed"]

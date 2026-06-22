@@ -1,6 +1,26 @@
 # Claude Code Handoff Document
-**Last Updated:** 2026-06-21
-**Updated By:** Fable 5
+**Last Updated:** 2026-06-22
+**Updated By:** Opus 4.8, Dweezil
+
+---
+
+## SESSION — 2026-06-22 (Opus 4.8, Dweezil) — Gun-less hull + modular mining turrets
+
+### Player ship art → gun-less hull
+- Body `Sprite2D` swapped from `assets/ship.png` (1024²) to `assets/new assets/ship_noGuns.png` (2048²); scale 0.5 → 0.25 so on-screen size is unchanged and the existing thruster / collision / turret offsets stay valid. Same hull, minus the drawn nose cannon + side gun barrels — guns are now modular.
+
+### Modular mining turrets (`TurretLeft` / `TurretRight`)
+- Two `Node2D` mounts under Player at `(-2, ∓125)`, mirrored across the x-axis (right = left with y negated).
+- Each mount: fixed **Base** `Sprite2D` (`turretBase.png`, offset `(0,617)`) + rotating **Barrel** `Sprite2D` (`miningLaser_Left/Right.png`, offset `(390,131)` / `(-388,131)`, rest rotation `1.5708`). All scale 0.22. Pivot offsets derived from each PNG's alpha bbox so the barrel rotates about its socket.
+- `Player.gd._aim_turrets()` / `_aim_barrel()` run each physics frame, **before** `_handle_mining_laser`: rotate each barrel toward the global mouse in the mount's local frame, clamped to the mining cone (`rotation = clamp(angle_to_target, ±half_cone) + PI/2`; art points "up", so the +90° cant = ship-forward). Per-mount convergence on the aim point.
+- **Beams fire from the muzzles**: each frame the beam + raycast `global_position` is set to `barrel.to_global(BARREL_TIP_LOCAL)`, `BARREL_TIP_LOCAL = (0,-420)` (top-center of barrel art, above the socket). Muzzle auto-tracks barrel rotation + scale, so the old static `(134,±98)` origins on MiningBeam/Ray are overwritten at runtime.
+
+### New assets (`assets/new assets/`)
+`ship_noGuns.png`, `turretBase.png`, `miningLaser_Left.png`, `miningLaser_Right.png` — all 2048², the user's own art (same hull lineage as `ship.png`).
+
+### Open / tunable
+- Turret `scale` (0.22) and mount positions are eyeball-tuned to clear the engine housings — nudge if overlap persists.
+- Only `TurretLeft` is hand-placed; `TurretRight` is mirrored by hand each change. Could encode the mirror in `_ready()` if it keeps churning.
 
 ---
 
@@ -44,7 +64,6 @@ Replaced the 6-stage definition with 30. Primary levers (`threats`, `max_threats
 - **Death jitter**: `_sample_deaths` rolls `randf_range(0.65, 1.45)` on the computed result. Same rock, same continent, different numbers every time. Floor still respected.
 - **Station departure velocity zeroed**: `StationShop._on_depart` sets `player.velocity = Vector2.ZERO` before emitting the departed signal. Ship is stationary when control returns.
 - **Mining laser distance falloff**: damage scales `clamp(1.0 - dist/2000.0, 0.3, 1.0)` from ray origin to hit point. Full at contact, 30% floor at 2000+ units. Tunable in `Player._fire_beam`.
-
 ---
 
 ## DESIGN BACKLOG — Difficulty mechanics

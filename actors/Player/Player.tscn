@@ -1,16 +1,19 @@
 [gd_scene format=3 uid="uid://deu6i1v8v2ut1"]
 
-[ext_resource type="Texture2D" uid="uid://d2mx6seo4j1q4" path="res://assets/ship.png" id="1"]
+[ext_resource type="Texture2D" uid="uid://caoijaxmu4r03" path="res://assets/new assets/ship_noGuns.png" id="1"]
 [ext_resource type="Script" uid="uid://cblwr51y0rglf" path="res://actors/Player/Player.gd" id="3"]
 [ext_resource type="PackedScene" path="res://Prograde_Indicator.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://Retrograde_Indicator.tscn" id="5"]
 [ext_resource type="Texture2D" uid="uid://fmr186h12jj7" path="res://Ship_System_RetrogradeIndicator.png" id="6"]
 [ext_resource type="Texture2D" uid="uid://coy84i6dt0173" path="res://assets/earth.png" id="7"]
 [ext_resource type="PackedScene" path="res://actors/Player/MassDriverTurret.tscn" id="8"]
-[ext_resource type="PackedScene" path="res://actors/Player/DefenseLaserTurret.tscn" id="12"]
 [ext_resource type="Texture2D" uid="uid://bpwaegbvmqyt6" path="res://assets/thruster_flame_1.png" id="9"]
 [ext_resource type="Texture2D" uid="uid://son5u65w0sar" path="res://assets/thruster_flame_2.png" id="10"]
 [ext_resource type="Texture2D" uid="uid://e3rriton5ijl" path="res://assets/thruster_flame_3.png" id="11"]
+[ext_resource type="PackedScene" path="res://actors/Player/DefenseLaserTurret.tscn" id="12"]
+[ext_resource type="Texture2D" uid="uid://2fdm1gdq7ecl" path="res://assets/new assets/turretBase.png" id="13"]
+[ext_resource type="Texture2D" uid="uid://bp3j0jodmd47h" path="res://assets/new assets/miningLaser_Left.png" id="14"]
+[ext_resource type="Texture2D" uid="uid://vx4w8yycrrj" path="res://assets/new assets/miningLaser_Right.png" id="15"]
 
 [sub_resource type="SpriteFrames" id="frames_burn"]
 animations = [{
@@ -35,7 +38,6 @@ radius = 90.0
 [node name="Player" type="CharacterBody2D" unique_id=1727565866 groups=["minimap", "persists", "player"]]
 z_index = 4
 z_as_relative = false
-scale = Vector2(1, 1)
 collision_layer = 7
 collision_mask = 7
 script = ExtResource("3")
@@ -44,7 +46,7 @@ script = ExtResource("3")
 z_index = 5
 z_as_relative = false
 rotation = 1.5708
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.25, 0.25)
 texture = ExtResource("1")
 
 [node name="ThrusterFlame" type="AnimatedSprite2D" parent="." unique_id=824801070]
@@ -141,7 +143,7 @@ z_as_relative = false
 position = Vector2(134, -98)
 points = PackedVector2Array(0, 0, 0, 30)
 width = 3.0
-default_color = Color(0.0, 1.0, 1.0, 1)
+default_color = Color(0, 1, 1, 1)
 joint_mode = 2
 begin_cap_mode = 2
 end_cap_mode = 2
@@ -153,7 +155,7 @@ z_as_relative = false
 position = Vector2(134, 98)
 points = PackedVector2Array(0, 0, 0, 30)
 width = 3.0
-default_color = Color(0.0, 1.0, 1.0, 1)
+default_color = Color(0, 1, 1, 1)
 joint_mode = 2
 begin_cap_mode = 2
 end_cap_mode = 2
@@ -199,3 +201,39 @@ position = Vector2(130, 0)
 
 [node name="CollisionBox" type="CollisionPolygon2D" parent="." unique_id=1011919871]
 polygon = PackedVector2Array(113, 0, 63, -20, 58, -28, 28, -70, -32, -58, -54, -38, -107, 0, -54, 38, -32, 58, 28, 70, 58, 28, 63, 20)
+
+[node name="TurretLeft" type="Node2D" parent="." unique_id=356858363]
+position = Vector2(-2, -125)
+
+[node name="Base" type="Sprite2D" parent="TurretLeft" unique_id=234542761]
+z_index = 6
+z_as_relative = false
+scale = Vector2(0.22, 0.22)
+texture = ExtResource("13")
+offset = Vector2(0, 617)
+
+[node name="Barrel" type="Sprite2D" parent="TurretLeft" unique_id=1518989121]
+z_index = 7
+z_as_relative = false
+rotation = 1.5708
+scale = Vector2(0.22, 0.22)
+texture = ExtResource("14")
+offset = Vector2(390, 131)
+
+[node name="TurretRight" type="Node2D" parent="." unique_id=356858364]
+position = Vector2(-2, 125)
+
+[node name="Base" type="Sprite2D" parent="TurretRight" unique_id=1270258443]
+z_index = 6
+z_as_relative = false
+scale = Vector2(0.22, 0.22)
+texture = ExtResource("13")
+offset = Vector2(0, 617)
+
+[node name="Barrel" type="Sprite2D" parent="TurretRight" unique_id=236551795]
+z_index = 7
+z_as_relative = false
+rotation = 1.5708
+scale = Vector2(0.22, 0.22)
+texture = ExtResource("15")
+offset = Vector2(-388, 131)

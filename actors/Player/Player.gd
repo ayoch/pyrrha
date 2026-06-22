@@ -67,6 +67,13 @@ var frequency_counter := 0
 @onready var mining_beam_right: Line2D = $MiningBeamRight
 @onready var mining_ray_left: RayCast2D = $MiningRayLeft
 @onready var mining_ray_right: RayCast2D = $MiningRayRight
+@onready var turret_barrel_left: Sprite2D = $TurretLeft/Barrel
+@onready var turret_barrel_right: Sprite2D = $TurretRight/Barrel
+
+## Muzzle in the barrel sprite's local space: top-center of the art, 420 px
+## above the socket pivot. barrel.to_global() applies the barrel's rotation and
+## 0.25 scale, giving the real-world muzzle the beams should fire from.
+const BARREL_TIP_LOCAL: Vector2 = Vector2(0, -420)
 @onready var prograde_indicator = $Prograde_Indicator
 @onready var retrograde_indicator = $Retrograde_Indicator
 @onready var thrust_indicator = $Thrust_Indicator
@@ -170,6 +177,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		_handle_turning(delta)
 		_handle_thrust(delta)
+	_aim_turrets()
 	_handle_mining_laser(delta)
 	_handle_energy(delta)
 	_push_energy_to_turret()
@@ -352,6 +360,30 @@ func _handle_mining_laser(_delta: float) -> void:
 		return
 	_fire_beam(mining_beam_left, mining_ray_left)
 	_fire_beam(mining_beam_right, mining_ray_right)
+
+
+# Mining turrets visibly track the aim point (mouse), clamped to the same cone
+# the beams fire within. Each barrel's art points "up", so the +90° cant rests
+# it along ship-forward; angle-to-target (in the mount's local frame) + PI/2
+# aims it, with per-mount convergence on the target.
+func _aim_turrets() -> void:
+	var target: Vector2 = get_global_mouse_position()
+	var half_cone: float = deg_to_rad(mining_cone_degrees * 0.5)
+	_aim_barrel(turret_barrel_left, mining_beam_left, mining_ray_left, target, half_cone)
+	_aim_barrel(turret_barrel_right, mining_beam_right, mining_ray_right, target, half_cone)
+
+
+# Rotates the barrel to the aim point (clamped to the cone), then anchors the
+# beam and raycast origins to the barrel muzzle so the beam fires from the tip.
+func _aim_barrel(
+	barrel: Sprite2D, beam: Line2D, ray: RayCast2D, target: Vector2, half_cone: float
+) -> void:
+	var local_target: Vector2 = barrel.get_parent().to_local(target)
+	var angle: float = clampf(local_target.angle(), -half_cone, half_cone)
+	barrel.rotation = angle + PI / 2.0
+	var muzzle: Vector2 = barrel.to_global(BARREL_TIP_LOCAL)
+	beam.global_position = muzzle
+	ray.global_position = muzzle
 
 
 # Unified energy budget. Any active drain stops regen for that frame; idle

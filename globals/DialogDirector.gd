@@ -28,6 +28,7 @@ var _bags: Dictionary = {}               # situation -> remaining shuffled indic
 var _last_variant: Dictionary = {}       # situation -> last index shown
 var _cooldown_until: Dictionary = {}     # situation -> earliest next fire (sec)
 var _story_played: Dictionary = {}       # beat key -> true
+var _pending_story: Array = []           # timed story beats counting down (sorted, soonest first)
 
 var _max_hull_seen: float = 0.0
 var _low_hull_latched: bool = false
@@ -71,6 +72,7 @@ func _on_boss_started(idx: int, _pattern: String) -> void:
 
 
 func _on_respite_started(idx: int) -> void:
+	_flush_pending_story()   # stage cleared: play any timed beats that didn't get to fire
 	_release_story(idx, "respite")
 	_fire_reactive("respite")
 	# Health latches reset between stages so warnings can fire again next stage.
@@ -88,8 +90,42 @@ func _release_story(stage_idx: int, cue: String) -> void:
 		if _story_played.has(key):
 			continue
 		_story_played[key] = true
-		_emit(String(beat.get("speaker", "")), String(beat.get("icon", "")),
-			String(beat.get("text", "")), PRIORITY_STORY, -1.0)
+		var speaker: String = String(beat.get("speaker", ""))
+		var icon: String = String(beat.get("icon", ""))
+		var text: String = String(beat.get("text", ""))
+		# Optional `at` (seconds of active play after this cue fires) spreads beats
+		# across the stage. Absent / 0 -> fires now, the original behavior.
+		var at: float = float(beat.get("at", 0.0))
+		if at > 0.0:
+			_schedule_story(at, speaker, icon, text)
+		else:
+			_emit(speaker, icon, text, PRIORITY_STORY, -1.0)
+
+
+# Timed story beats count down only during active play: _process doesn't run
+# while the tree is paused (Director is not PROCESS_MODE_ALWAYS), so the pause
+# menu / station time doesn't burn a beat's delay.
+func _process(delta: float) -> void:
+	if _pending_story.is_empty():
+		return
+	for entry in _pending_story:
+		entry["remaining"] = float(entry["remaining"]) - delta
+	while not _pending_story.is_empty() and float(_pending_story[0]["remaining"]) <= 0.0:
+		var b: Dictionary = _pending_story.pop_front()
+		_emit(String(b["speaker"]), String(b["icon"]), String(b["text"]), PRIORITY_STORY, -1.0)
+
+
+func _schedule_story(delay: float, speaker: String, icon: String, text: String) -> void:
+	_pending_story.append({ "remaining": delay, "speaker": speaker, "icon": icon, "text": text })
+	_pending_story.sort_custom(func(a, b): return float(a["remaining"]) < float(b["remaining"]))
+
+
+# Emit every still-pending timed beat now. Used at stage end so a fast clear
+# never silently drops a story line (story beats are must-play).
+func _flush_pending_story() -> void:
+	for b in _pending_story:
+		_emit(String(b["speaker"]), String(b["icon"]), String(b["text"]), PRIORITY_STORY, -1.0)
+	_pending_story.clear()
 
 
 # ---------------------------------------------------------------- reactive
@@ -125,10 +161,12 @@ func _on_shield_changed(shield: float) -> void:
 
 
 func _on_game_won() -> void:
+	_flush_pending_story()   # finale has no respite; don't lose its timed beats
 	_fire_reactive("victory")
 
 
 func _on_player_died() -> void:
+	_pending_story.clear()   # run's over; drop unsaid mid-stage chatter
 	_fire_reactive("defeat")
 
 
@@ -179,6 +217,7 @@ func _reset_run() -> void:
 	_last_variant.clear()
 	_cooldown_until.clear()
 	_story_played.clear()
+	_pending_story.clear()
 	_max_hull_seen = 0.0
 	_low_hull_latched = false
 	_shield_down_latched = false

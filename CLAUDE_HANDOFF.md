@@ -4,6 +4,36 @@
 
 ---
 
+## SESSION — 2026-06-22 (Opus 4.8, Dweezil) — Threat-model unification + dialog timing + threat ramp
+
+Three pieces, all **uncommitted** as of this entry (the DECOUPLED control scheme below is already committed/pushed).
+
+### Threat model: "shown as a threat" now == "can hit Earth" (Jon's rule)
+There were **two disagreeing definitions of "threat."** The minimap painted a rock red purely by geometry (`Mini_Map._is_on_collision_course`, no `is_threat` check), but lethality in `Asteroid_Manager._check_earth_impacts` was gated by `if not c.is_threat: continue` — so nuisance rocks on a collision course showed red yet **passed through Earth harmlessly**. Jon (correctly) saw ~6 red rocks in stage 1 that couldn't actually hit. The two collision tests are byte-identical; only the `is_threat` gate diverged. Note `_any_rocks_threatening_earth` *already documented* the intended model ("ANY rock on a collision course counts").
+- **Dropped the `is_threat` gate** for whole rocks: any non-fragment rock on a collision course now gets impact fate → hits Earth. Minimap red ⟺ lethal, by construction (same predicate). Deflected/harmless fragments still pass through (the only exception). Off-radar threats stay lethal-but-hidden by design (one-directional rule: red ⟹ lethal, not the converse).
+- **Nuisance rocks guaranteed off Earth-courses:** replaced the flaky 10-try velocity re-roll in `_queue_whole_asteroid` with deterministic `_heading_clear_of_earth()` — steers the heading at least (Earth's angular radius + `NUISANCE_EARTH_MARGIN_DEG` = 8°) off the bearing to Earth, so a nuisance rock can never be on a course. Threat count is now exactly what the threat system deliberately aims.
+- **Caveat / unverified:** I could not statically reproduce the exact "6 reds in stage 1" (the threat schedule is 1-at-a-time pre-boss; the re-roll *should* have prevented nuisance leaks). The fix makes the rule hold regardless of the root cause, but **playtest stage 1** to confirm red==lethal and that difficulty didn't spike. Dynamic rocks (sleepers/blockers) that cross Earth are now lethal too — consistent ("rocks are rocks"), rare; flag if undesirable.
+
+### Threat count ramp (Jon: "1 is far too little; try 3 for level 1 and adjust up")
+Rewrote the `STAGES` `threats` column (positional, 30 rows) and synced the milestone comments.
+- OLD: `1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,8,8,9,9,10,10,11,11,12,13,14`
+- NEW: `3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,12,13,13,14,14,14,15,15,16,16`
+- `max_threats` unchanged (overflow → follow-up volleys, as designed). These are sandbox balance values — tune any row freely.
+
+### Dialog: timed story beats (`at` field) — "dole story out throughout a stage"
+`DialogContent.STORY` beats take an optional **`at`** (seconds of active play after the cue fires). Absent/0 = fires immediately (original behavior; existing beats unchanged). `DialogDirector` schedules them in `_pending_story`, counts down only in `_process` (so pause/station time doesn't burn the timer), and **flushes any unfired beats at the dock** so a fast clear never drops a must-play line; a death drops them. Works on any cue. Documented in `DialogContent.gd` header + `docs/dialog_system.md`. (We discussed pacing by *threats destroyed* instead — deferred; early stages have too few threats to space intro beats, so time is the better default there. Could add `after_threats` later for mid/late beats.)
+
+### Files touched (this entry)
+- `Asteroid_Manager.gd` — impact-fate gate, `_heading_clear_of_earth` + `NUISANCE_EARTH_MARGIN_DEG`, `STAGES` threats column + comments.
+- `globals/DialogDirector.gd` — `_pending_story`, `_process`, `_schedule_story`, `_flush_pending_story`, lifecycle flush/clear.
+- `globals/DialogContent.gd` — `at` documented in header (Kaowitz line edits are Jon's).
+- `docs/dialog_system.md` — `at` field documented.
+
+### Kaowitz dialog framing (context captured)
+Premise: the asteroids are an **alien attack** — orbits nudged silently/coldly/quickly to hit Earth and wreck her nearby traffic. Not in the reference card / docs yet. Kaowitz's lines should read as reacting to a deliberate adversary, not a natural hazard. Removed a 4th-wall "stage" reference from her respite line. Still TODO: capture the premise as canon + a pass on her lines for the attack framing.
+
+---
+
 ## SESSION — 2026-06-22 (Opus 4.8, Dweezil) — Third control scheme: DECOUPLED (keyboard ship + independent mouse turrets)
 
 Added a selectable control scheme alongside the existing two (the chooser is in the **pause-menu Settings panel**, not a standalone settings menu — that's where the control-scheme radio lives).

@@ -25,11 +25,16 @@ extends RefCounted
 #   stage it fires. Story lines are high priority, never dropped, and play in
 #   listed order. They replay on a fresh run (when stage 1 starts).
 #       stage_index: [
-#           { id, cue, speaker, icon, text },
+#           { id, cue, speaker, icon, text, at },
 #           ...
 #       ]
 #   Valid cues: "start" (stage begins), "boss" (boss incoming),
 #               "respite" (stage cleared / dock).
+#   Optional `at`: seconds of active play AFTER the cue fires, to dole beats out
+#   across a stage instead of dumping them all at once. Omit / 0 == fire now.
+#   Counts down only while playing (paused/station time doesn't burn it). If the
+#   stage is cleared before a timed beat fires, it plays at the dock (never lost).
+#   e.g. { "id": "midstage", "cue": "start", "at": 45.0, ... } -> ~45s into the stage.
 
 # ----------------------------------------------------------------------------
 # REACTIVE
@@ -38,9 +43,9 @@ const REACTIVE: Dictionary = {
 	"inbound_earth": {
 		"speaker": "Kaowitz", "icon": "kaowitz", "cooldown": 12.0,
 		"variants": [
-			"One's locked onto Earth — burn it down before it lands.",
-			"Collision course confirmed. That rock is aimed at home.",
-			"We've got an inbound. Don't let it reach the surface.",
+			"We've got a rock bound for Earth; burn it down before it lands.",
+			"Collision course confirmed. That one's aimed at home.",
+			"Inbound! Don't let it reach the surface.",
 			"Threat trajectory through Earth. Intercept it.",
 		],
 	},
@@ -48,7 +53,7 @@ const REACTIVE: Dictionary = {
 		"speaker": "Kaowitz", "icon": "kaowitz", "cooldown": 8.0,
 		"variants": [
 			"Impact. We took that one.",
-			"It got through. Mark it down.",
+			"One got through. Mark it down.",
 			"Surface strike. Could've been worse.",
 		],
 	},
@@ -56,15 +61,15 @@ const REACTIVE: Dictionary = {
 		"speaker": "Kaowitz", "icon": "kaowitz", "cooldown": 6.0,
 		"variants": [
 			"That was a city. Pull it together.",
-			"Catastrophic strike — millions gone in a blink.",
-			"We just lost a continent's worth of people. Move.",
+			"Catastrophic strike. That...could be millions.",
+			"We just took a big hit. Don't let it happen again.",
 		],
 	},
 	"shield_down": {
 		"speaker": "Kaowitz", "icon": "kaowitz", "cooldown": 10.0,
 		"variants": [
 			"Shield's gone. You're bare metal now.",
-			"No more shield — every hit is hull from here.",
+			"No more shield. Be very careful.",
 			"Shield collapsed. Get clear and let it recharge.",
 		],
 	},
@@ -72,15 +77,15 @@ const REACTIVE: Dictionary = {
 		"speaker": "Kaowitz", "icon": "kaowitz", "cooldown": 10.0,
 		"variants": [
 			"Hull's failing. One more bad hit and you're done.",
-			"You're falling apart out there — disengage.",
-			"Critical damage. Break off, now.",
+			"You're falling apart out there. Disengage.",
+			"Critical damage. You can't help if you're dead.",
 		],
 	},
 	"boss_incoming": {
 		"speaker": "Kaowitz", "icon": "kaowitz", "cooldown": 0.0,
 		"variants": [
-			"Here comes the big push. Hold the line.",
-			"Mass contact inbound — this is the hard part.",
+			"We've got a big one coming. Hold the line.",
+			"Mass contact inbound. Prioritize.",
 			"Brace. The wave's about to break.",
 		],
 	},
@@ -88,7 +93,7 @@ const REACTIVE: Dictionary = {
 		"speaker": "Kaowitz", "icon": "kaowitz", "cooldown": 0.0,
 		"variants": [
 			"Skies are clear. Dock and catch your breath.",
-			"That's the stage. Get to the station while you can.",
+			"That's the last of them. Get to the station while you can.",
 			"Quiet for now. Repair, resupply, regroup.",
 		],
 	},
@@ -114,9 +119,9 @@ const REACTIVE: Dictionary = {
 const STORY: Dictionary = {
 	0: [
 		{ "id": "intro_1", "cue": "start", "speaker": "Kaowitz", "icon": "kaowitz",
-		  "text": "You're the only ship we got refit in time. Everything past the Moon is yours to hold." },
+		  "text": "Miner 729, we've got a new mission for you. A rock's earthbound, probably the result of a collision the scopes didn't catch." },
 		{ "id": "intro_2", "cue": "start", "speaker": "Kaowitz", "icon": "kaowitz",
-		  "text": "Mine the rocks, break the big ones, keep them off Earth. Simple. Until it isn't." },
+		  "text": "It's a chondrite. We don't normally see them this far in. Light it up." },
 		{ "id": "first_boss", "cue": "boss", "speaker": "Kaowitz", "icon": "kaowitz",
 		  "text": "First real wave. Whatever's pushing these at us, this is just it clearing its throat." },
 	],

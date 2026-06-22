@@ -64,6 +64,7 @@ In `DialogContent.STORY`, keyed by **stage index (0-based — stage 1 is `0`)**:
 - `cue` is when in the stage it fires: `"start"`, `"boss"`, or `"respite"`.
 - `id` must be unique within its stage+cue; it's how the system remembers a beat was already played.
 - Multiple beats with the same cue play in listed order.
+- **`at` (optional)** — seconds of active play *after* the cue fires, to spread beats across a stage instead of dumping them at once. Omit or `0` fires immediately (the original behavior). Example: `{ "id": "midstage", "cue": "start", "at": 45.0, ... }` fires ~45s into the stage. The countdown only ticks during active play — the pause menu and the station/respite don't burn it (the Director isn't `PROCESS_MODE_ALWAYS`). If the stage is cleared before a timed beat fires, it's flushed at the dock so a fast clear never drops a story line; a player death drops unsaid mid-stage beats.
 
 ---
 

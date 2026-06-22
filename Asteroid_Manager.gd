@@ -135,65 +135,65 @@ enum Phase { ACTIVE, RESPITE, WON, DEAD }
 
 const STAGES := [
 	# 1  — intro; one scheduled threat, simple fastball boss
-	{"duration": 45.0,  "threats":  1, "boss": "fastball",            "base_credits": 150, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
+	{"duration": 45.0,  "threats":  3, "boss": "fastball",            "base_credits": 150, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
 	# 2  — settle in; same shape, nothing new
-	{"duration": 50.0,  "threats":  1, "boss": "fastball",            "base_credits": 175, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
-	# 3  — threats: 2; boss: double_fastball
-	{"duration": 50.0,  "threats":  2, "boss": "double_fastball",     "base_credits": 200, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
+	{"duration": 50.0,  "threats":  3, "boss": "fastball",            "base_credits": 175, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
+	# 3  — threats: 4; boss: double_fastball
+	{"duration": 50.0,  "threats":  4, "boss": "double_fastball",     "base_credits": 200, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.00},
 	# 4  — new: off-radar rocks (don't show on minimap)
-	{"duration": 55.0,  "threats":  2, "boss": "double_fastball",     "base_credits": 220, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.03},
+	{"duration": 55.0,  "threats":  4, "boss": "double_fastball",     "base_credits": 220, "max_threats": 2, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.03},
 	# 5  — max_threats: 3 (first multi-rock volley)
-	{"duration": 55.0,  "threats":  2, "boss": "double_fastball",     "base_credits": 240, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.04},
-	# 6  — threats: 3
-	{"duration": 60.0,  "threats":  3, "boss": "double_fastball",     "base_credits": 260, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.05},
+	{"duration": 55.0,  "threats":  5, "boss": "double_fastball",     "base_credits": 240, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.04},
+	# 6  — threats: 5
+	{"duration": 60.0,  "threats":  5, "boss": "double_fastball",     "base_credits": 260, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.05},
 	# 7  — new: clump boss (random formation: cluster / line / semicircle)
-	{"duration": 60.0,  "threats":  3, "boss": "clump_4",             "base_credits": 280, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.06},
+	{"duration": 60.0,  "threats":  6, "boss": "clump_4",             "base_credits": 280, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.00, "off_radar_chance": 0.06},
 	# 8  — new: blocker rocks (interpose between player and threats)
-	{"duration": 65.0,  "threats":  3, "boss": "clump_4",             "base_credits": 300, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.05, "off_radar_chance": 0.06},
-	# 9  — threats: 4
-	{"duration": 65.0,  "threats":  4, "boss": "clump_4",             "base_credits": 325, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.06, "off_radar_chance": 0.07},
+	{"duration": 65.0,  "threats":  6, "boss": "clump_4",             "base_credits": 300, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.05, "off_radar_chance": 0.06},
+	# 9  — threats: 7
+	{"duration": 65.0,  "threats":  7, "boss": "clump_4",             "base_credits": 325, "max_threats": 3, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.06, "off_radar_chance": 0.07},
 	# 10 — max_threats: 4
-	{"duration": 70.0,  "threats":  4, "boss": "clump_4",             "base_credits": 350, "max_threats": 4, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.07, "off_radar_chance": 0.07},
+	{"duration": 70.0,  "threats":  7, "boss": "clump_4",             "base_credits": 350, "max_threats": 4, "sleeper_chance": 0.00, "sleeper2_chance": 0.00, "blocker_chance": 0.07, "off_radar_chance": 0.07},
 	# 11 — new: Type-1 sleeper rocks (dormant; wake and chase the player)
-	{"duration": 70.0,  "threats":  4, "boss": "clump_4_plus_fastball","base_credits": 375, "max_threats": 4, "sleeper_chance": 0.25, "sleeper2_chance": 0.00, "blocker_chance": 0.07, "off_radar_chance": 0.08},
-	# 12 — threats: 5
-	{"duration": 75.0,  "threats":  5, "boss": "clump_4",             "base_credits": 400, "max_threats": 4, "sleeper_chance": 0.35, "sleeper2_chance": 0.00, "blocker_chance": 0.08, "off_radar_chance": 0.08},
+	{"duration": 70.0,  "threats":  8, "boss": "clump_4_plus_fastball","base_credits": 375, "max_threats": 4, "sleeper_chance": 0.25, "sleeper2_chance": 0.00, "blocker_chance": 0.07, "off_radar_chance": 0.08},
+	# 12 — threats: 8
+	{"duration": 75.0,  "threats":  8, "boss": "clump_4",             "base_credits": 400, "max_threats": 4, "sleeper_chance": 0.35, "sleeper2_chance": 0.00, "blocker_chance": 0.08, "off_radar_chance": 0.08},
 	# 13 — boss steps up to clump + trailing fastball
-	{"duration": 75.0,  "threats":  5, "boss": "clump_4_plus_fastball","base_credits": 425, "max_threats": 4, "sleeper_chance": 0.45, "sleeper2_chance": 0.00, "blocker_chance": 0.09, "off_radar_chance": 0.09},
+	{"duration": 75.0,  "threats":  9, "boss": "clump_4_plus_fastball","base_credits": 425, "max_threats": 4, "sleeper_chance": 0.45, "sleeper2_chance": 0.00, "blocker_chance": 0.09, "off_radar_chance": 0.09},
 	# 14 — max_threats: 5
-	{"duration": 80.0,  "threats":  5, "boss": "clump_4_plus_fastball","base_credits": 450, "max_threats": 5, "sleeper_chance": 0.50, "sleeper2_chance": 0.00, "blocker_chance": 0.09, "off_radar_chance": 0.09},
+	{"duration": 80.0,  "threats":  9, "boss": "clump_4_plus_fastball","base_credits": 450, "max_threats": 5, "sleeper_chance": 0.50, "sleeper2_chance": 0.00, "blocker_chance": 0.09, "off_radar_chance": 0.09},
 	# 15 — new: split-volley boss (simultaneous volleys from opposite sides)
-	{"duration": 80.0,  "threats":  6, "boss": "split_volley",        "base_credits": 475, "max_threats": 5, "sleeper_chance": 0.55, "sleeper2_chance": 0.00, "blocker_chance": 0.10, "off_radar_chance": 0.10},
+	{"duration": 80.0,  "threats": 10, "boss": "split_volley",        "base_credits": 475, "max_threats": 5, "sleeper_chance": 0.55, "sleeper2_chance": 0.00, "blocker_chance": 0.10, "off_radar_chance": 0.10},
 	# 16 — new: Type-2 sleeper rocks (fuse timer; wake and aim at Earth)
-	{"duration": 85.0,  "threats":  6, "boss": "split_volley",        "base_credits": 500, "max_threats": 5, "sleeper_chance": 0.60, "sleeper2_chance": 0.03, "blocker_chance": 0.10, "off_radar_chance": 0.10},
+	{"duration": 85.0,  "threats": 10, "boss": "split_volley",        "base_credits": 500, "max_threats": 5, "sleeper_chance": 0.60, "sleeper2_chance": 0.03, "blocker_chance": 0.10, "off_radar_chance": 0.10},
 	# 17 — max_threats: 6
-	{"duration": 85.0,  "threats":  6, "boss": "split_volley",        "base_credits": 525, "max_threats": 6, "sleeper_chance": 0.65, "sleeper2_chance": 0.04, "blocker_chance": 0.11, "off_radar_chance": 0.11},
-	# 18 — new: clump-6 boss; threats: 7
-	{"duration": 90.0,  "threats":  7, "boss": "clump_6",             "base_credits": 550, "max_threats": 6, "sleeper_chance": 0.70, "sleeper2_chance": 0.05, "blocker_chance": 0.11, "off_radar_chance": 0.11},
+	{"duration": 85.0,  "threats": 11, "boss": "split_volley",        "base_credits": 525, "max_threats": 6, "sleeper_chance": 0.65, "sleeper2_chance": 0.04, "blocker_chance": 0.11, "off_radar_chance": 0.11},
+	# 18 — new: clump-6 boss; threats: 11
+	{"duration": 90.0,  "threats": 11, "boss": "clump_6",             "base_credits": 550, "max_threats": 6, "sleeper_chance": 0.70, "sleeper2_chance": 0.05, "blocker_chance": 0.11, "off_radar_chance": 0.11},
 	# 19 — alternating between heavy bosses
-	{"duration": 90.0,  "threats":  7, "boss": "split_volley",        "base_credits": 575, "max_threats": 6, "sleeper_chance": 0.70, "sleeper2_chance": 0.06, "blocker_chance": 0.12, "off_radar_chance": 0.12},
-	# 20 — new: finale boss (clump-6 + fastball); threats: 8
-	{"duration": 90.0,  "threats":  8, "boss": "finale",              "base_credits": 600, "max_threats": 6, "sleeper_chance": 0.75, "sleeper2_chance": 0.07, "blocker_chance": 0.12, "off_radar_chance": 0.12},
+	{"duration": 90.0,  "threats": 12, "boss": "split_volley",        "base_credits": 575, "max_threats": 6, "sleeper_chance": 0.70, "sleeper2_chance": 0.06, "blocker_chance": 0.12, "off_radar_chance": 0.12},
+	# 20 — new: finale boss (clump-6 + fastball); threats: 12
+	{"duration": 90.0,  "threats": 12, "boss": "finale",              "base_credits": 600, "max_threats": 6, "sleeper_chance": 0.75, "sleeper2_chance": 0.07, "blocker_chance": 0.12, "off_radar_chance": 0.12},
 	# 21 — max_threats: 7
-	{"duration": 95.0,  "threats":  8, "boss": "clump_6",             "base_credits": 625, "max_threats": 7, "sleeper_chance": 0.75, "sleeper2_chance": 0.07, "blocker_chance": 0.13, "off_radar_chance": 0.12},
-	# 22 — threats: 9
-	{"duration": 95.0,  "threats":  9, "boss": "split_volley",        "base_credits": 650, "max_threats": 7, "sleeper_chance": 0.80, "sleeper2_chance": 0.08, "blocker_chance": 0.13, "off_radar_chance": 0.13},
+	{"duration": 95.0,  "threats": 12, "boss": "clump_6",             "base_credits": 625, "max_threats": 7, "sleeper_chance": 0.75, "sleeper2_chance": 0.07, "blocker_chance": 0.13, "off_radar_chance": 0.12},
+	# 22 — threats: 13
+	{"duration": 95.0,  "threats": 13, "boss": "split_volley",        "base_credits": 650, "max_threats": 7, "sleeper_chance": 0.80, "sleeper2_chance": 0.08, "blocker_chance": 0.13, "off_radar_chance": 0.13},
 	# 23 — sustained pressure
-	{"duration": 100.0, "threats":  9, "boss": "finale",              "base_credits": 675, "max_threats": 7, "sleeper_chance": 0.80, "sleeper2_chance": 0.09, "blocker_chance": 0.14, "off_radar_chance": 0.13},
-	# 24 — threats: 10
-	{"duration": 100.0, "threats": 10, "boss": "clump_6",             "base_credits": 700, "max_threats": 7, "sleeper_chance": 0.80, "sleeper2_chance": 0.09, "blocker_chance": 0.14, "off_radar_chance": 0.14},
+	{"duration": 100.0, "threats": 13, "boss": "finale",              "base_credits": 675, "max_threats": 7, "sleeper_chance": 0.80, "sleeper2_chance": 0.09, "blocker_chance": 0.14, "off_radar_chance": 0.13},
+	# 24 — threats: 14
+	{"duration": 100.0, "threats": 14, "boss": "clump_6",             "base_credits": 700, "max_threats": 7, "sleeper_chance": 0.80, "sleeper2_chance": 0.09, "blocker_chance": 0.14, "off_radar_chance": 0.14},
 	# 25 — max_threats: 8
-	{"duration": 100.0, "threats": 10, "boss": "finale",              "base_credits": 725, "max_threats": 8, "sleeper_chance": 0.85, "sleeper2_chance": 0.10, "blocker_chance": 0.15, "off_radar_chance": 0.14},
-	# 26 — threats: 11
-	{"duration": 105.0, "threats": 11, "boss": "split_volley",        "base_credits": 750, "max_threats": 8, "sleeper_chance": 0.85, "sleeper2_chance": 0.11, "blocker_chance": 0.15, "off_radar_chance": 0.14},
+	{"duration": 100.0, "threats": 14, "boss": "finale",              "base_credits": 725, "max_threats": 8, "sleeper_chance": 0.85, "sleeper2_chance": 0.10, "blocker_chance": 0.15, "off_radar_chance": 0.14},
+	# 26 — threats: 14
+	{"duration": 105.0, "threats": 14, "boss": "split_volley",        "base_credits": 750, "max_threats": 8, "sleeper_chance": 0.85, "sleeper2_chance": 0.11, "blocker_chance": 0.15, "off_radar_chance": 0.14},
 	# 27 — high, sustained pressure
-	{"duration": 105.0, "threats": 11, "boss": "finale",              "base_credits": 775, "max_threats": 8, "sleeper_chance": 0.85, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
-	# 28 — threats: 12
-	{"duration": 110.0, "threats": 12, "boss": "clump_6",             "base_credits": 800, "max_threats": 8, "sleeper_chance": 0.90, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
-	# 29 — threats: 13; max_threats: 9
-	{"duration": 110.0, "threats": 13, "boss": "split_volley",        "base_credits": 825, "max_threats": 9, "sleeper_chance": 0.90, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
+	{"duration": 105.0, "threats": 15, "boss": "finale",              "base_credits": 775, "max_threats": 8, "sleeper_chance": 0.85, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
+	# 28 — threats: 15
+	{"duration": 110.0, "threats": 15, "boss": "clump_6",             "base_credits": 800, "max_threats": 8, "sleeper_chance": 0.90, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
+	# 29 — threats: 16; max_threats: 9
+	{"duration": 110.0, "threats": 16, "boss": "split_volley",        "base_credits": 825, "max_threats": 9, "sleeper_chance": 0.90, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
 	# 30 — final stage
-	{"duration": 120.0, "threats": 14, "boss": "finale",              "base_credits": 900, "max_threats": 9, "sleeper_chance": 0.90, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
+	{"duration": 120.0, "threats": 16, "boss": "finale",              "base_credits": 900, "max_threats": 9, "sleeper_chance": 0.90, "sleeper2_chance": 0.12, "blocker_chance": 0.15, "off_radar_chance": 0.15},
 ]
 
 # Credits awarded = base_credits * pct, where pct is determined by how many
@@ -376,10 +376,12 @@ func _check_earth_impacts() -> void:
 	for c in get_children():
 		if not c.is_in_group("asteroid"):
 			continue
-		# Only intentional threat rocks can impact Earth. Nuisance rocks that
-		# happen to drift toward Earth pass through harmlessly — the difficulty
-		# curve is controlled entirely by the threat system.
-		if not c.is_threat:
+		# A rock on a collision course WILL hit Earth — the same test the minimap
+		# uses to paint it red, so "shown as a threat" and "can hit Earth" are one
+		# and the same. Only deflected/harmless fragments pass through; nuisance
+		# wholes are steered clear of Earth at spawn (see _queue_whole_asteroid),
+		# so the threat count stays exactly what the threat system deliberately aims.
+		if "is_fragment" in c and c.is_fragment and not c.is_threat:
 			continue
 		# Assign impact fate the first time a rock qualifies as a threat. The
 		# impact point is random along the chord the trajectory cuts through
@@ -437,6 +439,27 @@ func _on_earth_impact(asteroid, stage) -> void:
 		stage.spawn_explosion(asteroid.impact_point, EXPLOSION_SCALE_FOR_SIZE.get(asteroid.size, 0.3))
 	asteroid.died_to_earth = true   # tells _on_asteroid_died to skip dust + fragmentation
 	asteroid.integrity = -1         # asteroid will report its own death next physics tick
+
+
+# Extra clearance beyond Earth's angular radius for nuisance headings.
+const NUISANCE_EARTH_MARGIN_DEG := 8.0
+
+
+# Nudge a heading so it sits at least (Earth's angular radius + margin) off the
+# bearing to Earth — a rock launched along the result cannot be on a collision
+# course. Keeps nuisance spawns from ever becoming real threats.
+func _heading_clear_of_earth(dir: Vector2, from_pos: Vector2, earth_pos: Vector2, earth_radius: float) -> Vector2:
+	var to_earth: Vector2 = earth_pos - from_pos
+	var dist: float = to_earth.length()
+	if dist <= earth_radius:
+		return dir
+	var bearing: float = to_earth.angle()
+	var half: float = asin(clampf(earth_radius / dist, 0.0, 1.0)) + deg_to_rad(NUISANCE_EARTH_MARGIN_DEG)
+	var delta: float = wrapf(dir.angle() - bearing, -PI, PI)
+	if absf(delta) >= half:
+		return dir
+	var side: float = 1.0 if delta >= 0.0 else -1.0
+	return Vector2.from_angle(bearing + side * half)
 
 
 func _is_on_collision_course_world(ast_pos: Vector2, ast_vel: Vector2, earth_pos: Vector2, earth_radius: float) -> bool:
@@ -586,18 +609,17 @@ func _queue_whole_asteroid(species: String) -> void:
 	var tex: Texture2D = _whole_texture(species)
 	var dir := Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
 	var pos: Vector2 = dir * _rng.randi_range(15000, 20000)
-	# Re-roll velocity until it doesn't aim at Earth. Nuisance rocks must never
-	# threaten Earth — the difficulty curve is owned entirely by the threat system.
+	# Nuisance rocks must never be on an Earth-collision course: under the unified
+	# threat model any rock that is on one WILL hit Earth. Steer the heading
+	# deterministically clear of Earth's disk (with margin) so the threat count
+	# stays exactly what the threat system deliberately aims at the planet.
 	var vel_dir := Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
 	var earth: Node = get_tree().get_first_node_in_group("earth")
 	if earth != null:
 		var earth_pos: Vector2 = (earth as Node2D).global_position
 		var earth_r: float = _node_visual_radius(earth)
 		if earth_r > 0.0:
-			for _i in 10:
-				if not _is_on_collision_course_world(pos, vel_dir, earth_pos, earth_r):
-					break
-				vel_dir = Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)).normalized()
+			vel_dir = _heading_clear_of_earth(vel_dir, pos, earth_pos, earth_r)
 	var vel := vel_dir * _rng.randf_range(1, 1000)
 	var rot_rate := _rng.randf_range(-0.2, 0.2)
 	var props: Dictionary = _props(species)
